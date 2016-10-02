@@ -25,11 +25,13 @@
 	* Reading time & date format from khal config
 	* Proper parsing of organizer name
 	* Greping organizer email and send response
+		or strstr()?
 	* Proper makefile
 	* Merge formatTime() and formatDate()
 	* Selection parsing as function
 	* Replace the icsObject struct with something useful
 	* Move all of this crap to README.md
+	* Support for multiple calendars
 
 */
 
@@ -44,9 +46,9 @@ char timeDelim = ':';
 char dateDelim = '-';
 const char delim[] = ":;\r\n";
 const char khal[] = "khal";
-const char ikhal[] = "ikhal";
 const char clear[] = "clear";
 const int numObjects = 4;
+const int showDays = 3;
 
 // Yes, there is definitely a smarter way to do this
 typedef struct {
@@ -219,7 +221,8 @@ int main(int argc, char *argv[]) {
 
 	printf("\n");
 	
-	sprintf(commandString, "%s agenda %s", khal, object[2].date);
+	sprintf(commandString, "%s agenda --days %d %s",
+			khal, showDays, object[2].date);
 	system(commandString);
 	printMenu();
 	selection = getInput();
@@ -233,7 +236,8 @@ int main(int argc, char *argv[]) {
 			system(commandString);
 			return 0;
 		} else if(selection == 'i' || selection == 'I') { 
-			system(ikhal);
+			sprintf(commandString, "%s interactive", khal);
+			system(commandString);
 			selection = getInput();
 		} else { return 0; }
 	}
