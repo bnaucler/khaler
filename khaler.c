@@ -3,11 +3,11 @@
 	khaler.c - v0.1
 	a parser for .ics files and adding to khal
 
-	Written by:
+	WRITTEN BY:
 	Björn Westerberg Nauclér 2016
 	mail@bnaucler.se
 
-	License: 
+	LICENSE: 
 	None. Do whatever you want with it,
 	and let me know if you find it useful.
 
@@ -21,16 +21,15 @@
 	longdateformat= %Y-%m-%d
 	(or edit formatDate() and formatTime())
 
-	Also, check location of khal executable
-	before compiling.
-
 	TODO:
 	* Reading time & date format from khal config
-	* Input syntax check
-	* Better parsing of organizer name
+	* Proper parsing of organizer name
+	* Greping organizer email and send response
 	* Proper makefile
 	* Merge formatTime() and formatDate()
 	* Selection parsing as function
+	* Replace the icsObject struct with something useful
+	* Move all of this crap to README.md
 
 */
 
@@ -44,10 +43,12 @@
 char timeDelim = ':';
 char dateDelim = '-';
 const char delim[] = ":;\r\n";
-const char khal[] = "/usr/local/bin/khal";
+const char khal[] = "khal";
+const char ikhal[] = "ikhal";
+const char clear[] = "clear";
 const int numObjects = 4;
 
-// Yes there is probably a smarter way to do this.
+// Yes, there is definitely a smarter way to do this
 typedef struct {
 	char name[30];
 	char grepKey[20];
@@ -64,6 +65,7 @@ static struct termios old, new;
 char getch() {
 
   char inputChar;
+
   tcgetattr(0, &old);
   new = old;
   new.c_lflag &= ~ICANON;
@@ -71,6 +73,7 @@ char getch() {
   tcsetattr(0, TCSANOW, &new);
   inputChar = getchar();
   tcsetattr(0, TCSANOW, &old);
+
   return inputChar;
 }
 
@@ -82,7 +85,7 @@ char getInput() {
 	for(;;) {
 		ch = getch();
 		if(ch == 'q' || ch == 'Q' || ch == 'a' || 
-			ch == 'A' || ch == 'c' || ch == 'C') { 
+			ch == 'A' || ch == 'i' || ch == 'I') { 
 			return ch;
 		}
 	}
@@ -91,10 +94,10 @@ char getInput() {
 void printObject(icsObject *currentObject) {
 
 	if(currentObject->timeObject) {
-		printf("%s: %s %s\n", currentObject->name, 
+		printf("%s:\t%s %s\n", currentObject->name, 
 			currentObject->date, currentObject->time);
 	} else { 
-		printf("%s: %s\n", currentObject->name, currentObject->content); 
+		printf("%s:\t%s\n", currentObject->name, currentObject->content); 
 	}
 }
 
@@ -102,7 +105,7 @@ void printMenu() {
 
 	printf("\n--\n");
 	printf("a: Add to khal\n");
-	printf("c: Check khal\n");
+	printf("i: Launch ikhal\n");
 	printf("q: Quit\n");
 }
 
@@ -118,7 +121,6 @@ char *formatTime(char *unformTime) {
 	sprintf(formTime, "%c%c%c%c%c", h[0], h[1], timeDelim, m[0], m[1]);
 
 	return formTime;
-
 }
 
 char *formatDate(char *unformDate) {
@@ -137,10 +139,9 @@ char *formatDate(char *unformDate) {
 			m[0], m[1], dateDelim, d[0], d[1]);
 
 	return formDate;
-
 }
 
-int grepFor(char *inputToken, icsObject *currentObject) {
+void grepFor(char *inputToken, icsObject *currentObject) {
 
 	if(strcmp(inputToken, currentObject->grepKey) == 0) {
 		for(int a = 0; a < currentObject->depth; a++) { 
@@ -153,7 +154,6 @@ int grepFor(char *inputToken, icsObject *currentObject) {
 			} else { strcpy(currentObject->content, inputToken); }
 		}
 	} 
-	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
 	int maxChars = 1024;
 	char buf[maxChars];
 	char *token;
-	char khalAddString[100];
+	char commandString[100];
 	char selection;
 
 	icsObject object[numObjects];
@@ -185,6 +185,11 @@ int main(int argc, char *argv[]) {
 	object[3].depth = 2;
 	object[3].timeObject = 1;
 
+	if(argc != 2) { 
+		printf("Usage: khaler <filename.ics>\n");
+		return 1;
+	}
+
 	char *icsFile = argv[1];
 	FILE* file = fopen(icsFile, "r");
 
@@ -205,23 +210,31 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
+	system(clear);
+
 	for(int a = 0; a < numObjects; a++) {
 		objectPointer = &object[a];
 		printObject(objectPointer);
 	}
+
+	printf("\n");
 	
+	sprintf(commandString, "%s agenda %s", khal, object[2].date);
+	system(commandString);
 	printMenu();
 	selection = getInput();
 
-	if(selection == 'a' || selection == 'A') { 
-		sprintf(khalAddString, "%s new %s %s-%s %s %s", khal,
-			object[2].date, object[2].time,
-			object[3].date, object[3].time,
-			object[0].content);
-		system(khalAddString);
-		return 0;
-	} else if(selection == 'c' || selection == 'C') { 
-		system(khal);
-		return 0;
-	} else { return 0; }
+	for(;;) {
+		if(selection == 'a' || selection == 'A') { 
+			sprintf(commandString, "%s new %s %s-%s %s %s", khal,
+				object[2].date, object[2].time,
+				object[3].date, object[3].time,
+				object[0].content);
+			system(commandString);
+			return 0;
+		} else if(selection == 'i' || selection == 'I') { 
+			system(ikhal);
+			selection = getInput();
+		} else { return 0; }
+	}
 } 

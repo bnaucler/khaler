@@ -5,3 +5,6 @@ all:
 
 clean:
 	rm -f khaler
+
+install:
+	mv khaler /usr/local/bin
