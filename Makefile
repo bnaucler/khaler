@@ -1,7 +1,7 @@
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -I
 
 all:
-	cc khaler.c -o khaler
+	cc -o khaler khaler.c getch.c datetime.c
 
 clean:
 	rm -f khaler
