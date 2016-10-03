@@ -1,6 +1,6 @@
 /*
 
-	khaler.c - v0.1
+	khaler.c - v0.2
 	a parser for .ics files and adding to khal
 
 	WRITTEN BY:
@@ -22,14 +22,12 @@
 	(or edit formatDate() and formatTime())
 
 	TODO:
-	* Reading time & date format from khal config
-	* Proper parsing of organizer name
-	* Greping organizer email and send response
-		or strstr()?
+	* Use khal import builtin file parsing
+	* Proper parsing of organizer name and email
+	* Convert to strstr()
 	* Proper makefile
 	* Merge formatTime() and formatDate()
 	* Selection parsing as function
-	* Replace the icsObject struct with something useful
 	* Move all of this crap to README.md
 	* Support for multiple calendars
 
@@ -41,25 +39,14 @@
 #include <string.h>
 #include <termios.h>
 
-// Variables that might need tweaking
-char timeDelim = ':';
-char dateDelim = '-';
-const char delim[] = ":;\r\n";
+// Global constants that might need tweaking
+const char timeDelim = ':';
+const char dateDelim = '-';
+const char delim[] = ":;=\r\n";
 const char khal[] = "khal";
 const char clear[] = "clear";
 const int numObjects = 4;
 const int showDays = 3;
-
-// Yes, there is definitely a smarter way to do this
-typedef struct {
-	char name[30];
-	char grepKey[20];
-	char content[200];
-	char date[12];			// khal parsing possible without separating
-	char time[8];			// date and time. Done for posterity.
-	int depth;
-	bool timeObject;
-} icsObject;
 
 // Not my code. Thank you whoever you are.
 static struct termios old, new;
@@ -90,16 +77,6 @@ char getInput() {
 			ch == 'A' || ch == 'i' || ch == 'I') { 
 			return ch;
 		}
-	}
-}
-
-void printObject(icsObject *currentObject) {
-
-	if(currentObject->timeObject) {
-		printf("%s:\t%s %s\n", currentObject->name, 
-			currentObject->date, currentObject->time);
-	} else { 
-		printf("%s:\t%s\n", currentObject->name, currentObject->content); 
 	}
 }
 
@@ -143,54 +120,33 @@ char *formatDate(char *unformDate) {
 	return formDate;
 }
 
-void grepFor(char *inputToken, icsObject *currentObject) {
-
-	if(strcmp(inputToken, currentObject->grepKey) == 0) {
-		for(int a = 0; a < currentObject->depth; a++) { 
-			inputToken = strtok(NULL, delim);
-		}
-		if(inputToken != NULL) { 
-			if(currentObject->timeObject) { 
-				strcpy(currentObject->date, formatDate(strtok(inputToken, "T")));
-				strcpy(currentObject->time, formatTime(strtok(NULL,delim)));
-			} else { strcpy(currentObject->content, inputToken); }
-		}
-	} 
-}
-
 int main(int argc, char *argv[]) {
-
-	int maxChars = 1024;
-	char buf[maxChars];
-	char *token;
-	char commandString[100];
-	char selection;
-
-	icsObject object[numObjects];
-	icsObject *objectPointer = malloc(sizeof(icsObject));
-
-	strcpy(object[0].name, "Event name");
-	strcpy(object[0].grepKey, "SUMMARY");
-	object[0].depth = 1;
-	
-	strcpy(object[1].name, "Organizer");
-	strcpy(object[1].grepKey, "ORGANIZER");
-	object[1].depth = 2;
-
-	strcpy(object[2].name, "Start time");
-	strcpy(object[2].grepKey, "DTSTART");
-	object[2].depth = 2;
-	object[2].timeObject = 1;
-
-	strcpy(object[3].name, "End time");
-	strcpy(object[3].grepKey, "DTEND");
-	object[3].depth = 2;
-	object[3].timeObject = 1;
 
 	if(argc != 2) { 
 		printf("Usage: khaler <filename.ics>\n");
 		return 1;
 	}
+
+	int maxChars = 1024;
+	char buf[maxChars];
+	char *token;
+	char *stringPointer;
+	char commandString[100];
+	char selection;
+
+	char nameGrepKey[] = "SUMMARY";
+	char organizerGrepKey[] = "ORGANIZER";
+	char organizerEmailGrepKey[] = "mailto";
+	char startGrepKey[] = "DTSTART";
+	char endGrepKey[] = "DTEND";
+
+	char eventName[100];
+	char organizerName[100];
+	char organizerEmail[100];
+	char startTime[8];
+	char endTime[8];
+	char startDate[12];
+	char endDate[12];
 
 	char *icsFile = argv[1];
 	FILE* file = fopen(icsFile, "r");
@@ -200,13 +156,39 @@ int main(int argc, char *argv[]) {
 		return 1; }
 	else { 
 		while(fgets(buf, maxChars, file)){
-			token = strtok(buf, delim);
-			if(token) { // To avoid segfault on empty lines
-				for(int a = 0; a < numObjects; a++) {
-					if(strcasecmp(token, object[a].grepKey) == 0) { 
-						objectPointer = &object[a];
-						grepFor(buf, objectPointer); 
-					}
+
+			if((stringPointer = strstr(buf, nameGrepKey))) { 
+				token = strstr(stringPointer, ":");
+				token++;
+				strcpy(eventName, token);
+			}
+			
+			if((stringPointer = strstr(buf, organizerGrepKey))) { 
+				stringPointer = strstr(stringPointer, "CN=");
+				token = strtok(stringPointer, delim);
+				strcpy(organizerName, strtok(NULL, delim));
+			}
+
+			if((stringPointer = strstr(buf, organizerEmailGrepKey))) { 
+				token = strtok(stringPointer, delim);
+				strcpy(organizerEmail, strtok(NULL, delim));
+			}
+
+			if((stringPointer = strstr(buf, startGrepKey))) { 
+				token = strstr(stringPointer, ":");
+				token++;
+				if(token) {
+					strcpy(startDate, formatDate(strtok(token, "T")));
+					strcpy(startTime, formatTime(strtok(NULL,delim)));
+				}
+			}
+
+			if((stringPointer = strstr(buf, endGrepKey))) { 
+				token = strstr(stringPointer, ":");
+				token++;
+				if(token) {
+					strcpy(endDate, formatDate(strtok(token, "T")));
+					strcpy(endTime, formatTime(strtok(NULL,delim)));
 				}
 			}
 		}
@@ -214,15 +196,14 @@ int main(int argc, char *argv[]) {
 	
 	system(clear);
 
-	for(int a = 0; a < numObjects; a++) {
-		objectPointer = &object[a];
-		printObject(objectPointer);
-	}
+	printf("Event name:\t%s\n", eventName);
+	printf("Organizer:\t%s\t%s\n", organizerName, organizerEmail);
+	printf("Starting at:\t%s\t%s\n", startDate, startTime);
+	printf("Ending at:\t%s\t%s\n", endDate, endTime);
 
 	printf("\n");
 	
-	sprintf(commandString, "%s agenda --days %d %s",
-			khal, showDays, object[2].date);
+	sprintf(commandString, "%s agenda --days %d %s", khal, showDays, startDate);
 	system(commandString);
 	printMenu();
 	selection = getInput();
@@ -230,9 +211,7 @@ int main(int argc, char *argv[]) {
 	for(;;) {
 		if(selection == 'a' || selection == 'A') { 
 			sprintf(commandString, "%s new %s %s-%s %s %s", khal,
-				object[2].date, object[2].time,
-				object[3].date, object[3].time,
-				object[0].content);
+				startDate, startTime, endDate, endTime, eventName);
 			system(commandString);
 			return 0;
 		} else if(selection == 'i' || selection == 'I') { 
