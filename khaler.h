@@ -18,7 +18,9 @@
 
 char getch();
 int printAll();
+int printCalendars();
 char *formatDate(char *unformDate);
 char *formatTime(char *unformTime);
+char *readKhalConfig();
 
 #endif

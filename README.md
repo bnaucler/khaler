@@ -1,4 +1,4 @@
-# khaler v0.2 
+# khaler v0.2A 
 A parser for .ics files which feeds the data into khal.  
 
 # Written by:  
@@ -19,21 +19,24 @@ longdateformat= %Y-%m-%d
 (or edit datetime.c)
 
 # .mailcap
-It you would like to use khaler with mutt, add the following lines to your .mailcap.  
+If you would like to use khaler with mutt, add the following lines to your .mailcap.  
 text/calendar; khaler %s  
 application/ics; khaler %s  
 application/octet-stream; khaler %s
 
 # TODO
-* Read existing calendars from khal config
-	- create menu for selection
-* Use khal import builtin file parsing
-	- and include description
+* Create menu for calendar selection
+* Read default calendar from khal config
+	- and set to defult
 * Proper Makefile
-* Selection parsing as function
-* Move all of this crap to README.md
-* Support for multiple calendars
+* Proper email parsing
+* Attendee listing
+* Description listing
+* File parsing as function
 * Support for ics via stdin
+* Check for khal config in multiple locations
+* RSVP via mutt pipe
+* Sanitize calendar reading from khal config
 
 # Disclaimer
 Quick and dirty. Not even half done and probably full of bugs. Enjoy!

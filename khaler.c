@@ -1,3 +1,9 @@
+/*
+ 
+	khaler.c - main functions for khaler
+
+ */
+
 #include "khaler.h"
 
 // Global constants and variables that might need tweaking
@@ -11,6 +17,7 @@ char currentCal[50] = "work";
 
 // Global variable declarations
 char commandString[100];
+char calendars[100];
 char selection;
 
 char nameGrepKey[] = "SUMMARY";
@@ -26,6 +33,8 @@ char startTime[8];
 char endTime[8];
 char startDate[12];
 char endDate[12];
+
+char *icsFile;
 
 // Read one char without echo via getch
 char getInput() {
@@ -49,8 +58,9 @@ int processInput() {
 	for(;;) {
 
 		if(selection == 'a' || selection == 'A') { 
-			sprintf(commandString, "%s new -a %s %s %s-%s %s %s", khal,
-				currentCal, startDate, startTime, endDate, endTime, eventName);
+			// sprintf(commandString, "%s new -a %s %s %s-%s %s %s", khal,
+			// 	currentCal, startDate, startTime, endDate, endTime, eventName);
+			sprintf(commandString, "%s import -a %s --batch %s", khal, currentCal, icsFile);
 			system(commandString);
 			return 0;
 
@@ -60,16 +70,15 @@ int processInput() {
 			selection = getInput();
 
 		} else if(selection == 's' || selection == 'S') { 
+			printCalendars(calendars);
 			printf("Enter name of calendar to use: ");
 			scanf("%s", currentCal);
 			return printAll();
-			// selection = getInput();
 		}
 
 		else { return 0; }
 	}
 }
-
 
 void printEvent() {
 
@@ -83,11 +92,34 @@ void printEvent() {
 void printMenu() {
 
 	printf("\n--\n\n");
+	printf("Current calendar file: %s\n\n", icsFile);
 	printf("Current calendar: %s\n\n", currentCal);
 	printf("a: Add to khal\n");
 	printf("s: Select calendar\n");
 	printf("i: Launch ikhal\n");
 	printf("q: Quit\n");
+}
+
+int printCalendars(char *rawString) {
+
+	int maxCalendars = 10; // Anyone with more than ten calendars is crazy
+	char formattedCalendar[maxCalendars][50];
+	char *token;
+	int count = -1;
+	
+	token = strtok(rawString, ":");
+
+	for(int a = 0; a < maxCalendars; a++) {
+		if(token) {
+			count++;
+			strcpy(formattedCalendar[count], token);
+		}
+		token = strtok(NULL, ":");
+	}
+
+	for(int a = 0; a <= count; a++) { printf("%d: %s\n", a, formattedCalendar[a]); }
+
+	return 0;
 }
 
 int printAll() {
@@ -110,13 +142,21 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	strcpy(calendars, readKhalConfig());
+	if(strstr(calendars, ":") == NULL) { 
+		printf("khal configuration file could not be opened.\n"); 
+		return 1;
+	}
+
 	int maxChars = 1024;
 	char buf[maxChars];
 	char *token;
 	char *stringPointer;
 
-	char *icsFile = argv[1];
+	icsFile = argv[1];
 	FILE* file = fopen(icsFile, "r");
+
+	printf("%s\n", icsFile);
 
 	if(file == NULL) { 
 		printf("File %s could not be opened.\n", icsFile);
