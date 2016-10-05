@@ -16,6 +16,8 @@
 #include <string.h>
 #include <termios.h>
 
+extern char currentCal[50];
+
 char getch();
 int printAll();
 int printCalendars();

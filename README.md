@@ -20,17 +20,17 @@ application/octet-stream; khaler %s
 
 # TODO
 * Create proper menu for calendar selection
-* Read default calendar from khal config
-	- and set to defult
 * Proper Makefile(?)
+* Investigate why khal import --batch fails to select calendar
 * Proper email parsing
+* Separate formatCalendars and printCalendars
 * Attendee listing
 * Description listing
 * File parsing as function
 * Support for ics via stdin
 * Check for khal and return 1 if not found
 * Check for khal config in multiple locations
-* RSVP via mutt pipe
+* RSVP via mutt pipe (the actual work)
 * Sanitize calendar reading from khal config
 
 # Disclaimer

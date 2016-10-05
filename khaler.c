@@ -13,7 +13,7 @@ const char clear[] = "clear";
 const int numObjects = 4;
 const int showDays = 3;
 
-char currentCal[50] = "work";
+char currentCal[50];
 
 // Global variable declarations
 char commandString[100];
@@ -58,8 +58,6 @@ int processInput() {
 	for(;;) {
 
 		if(selection == 'a' || selection == 'A') { 
-			// sprintf(commandString, "%s new -a %s %s %s-%s %s %s", khal,
-			// 	currentCal, startDate, startTime, endDate, endTime, eventName);
 			sprintf(commandString, "%s import -a %s --batch %s", khal, currentCal, icsFile);
 			system(commandString);
 			return 0;
@@ -117,7 +115,9 @@ int printCalendars(char *rawString) {
 		token = strtok(NULL, ":");
 	}
 
+	printf("\n");
 	for(int a = 0; a <= count; a++) { printf("%d: %s\n", a, formattedCalendar[a]); }
+	printf("\n");
 
 	return 0;
 }
@@ -143,8 +143,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	strcpy(calendars, readKhalConfig());
-	if(strstr(calendars, ":") == NULL) { 
-		printf("khal configuration file could not be opened.\n"); 
+	if(strlen(calendars) == 0) { 
+		printf("No calendars found in khal configuration file.\n");
 		return 1;
 	}
 
@@ -155,8 +155,6 @@ int main(int argc, char *argv[]) {
 
 	icsFile = argv[1];
 	FILE* file = fopen(icsFile, "r");
-
-	printf("%s\n", icsFile);
 
 	if(file == NULL) { 
 		printf("File %s could not be opened.\n", icsFile);
