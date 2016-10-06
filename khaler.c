@@ -10,15 +10,12 @@
 const char delim[] = ":;=\r\n";
 const char khal[] = "khal";
 const char clear[] = "clear";
-const int numObjects = 4;
-const int showDays = 3;
-
-char currentCal[50];
 
 // Global variable declarations
 char commandString[100];
-char calendars[100];
-char selection;
+
+int currentCal;
+char cal[maxCalendars][maxCalName];
 
 char nameGrepKey[] = "SUMMARY";
 char organizerGrepKey[] = "ORGANIZER";
@@ -36,29 +33,15 @@ char endDate[12];
 
 char *icsFile;
 
-// Read one char without echo via getch
-char getInput() {
-
-	char ch;
-	
-	for(;;) {
-		ch = getch();
-		if(ch == 'q' || ch == 'Q' || ch == 'a' || 
-			ch == 'A' || ch == 'i' || ch == 'I' ||
-			ch == 's' || ch == 'S') { 
-			return ch;
-		}
-	}
-}
-
 int processInput() {
 
-	selection = getInput();
+	char selection = getInput();
 
 	for(;;) {
 
 		if(selection == 'a' || selection == 'A') { 
-			sprintf(commandString, "%s import -a %s --batch %s", khal, currentCal, icsFile);
+			sprintf(commandString, "%s import -a %s --batch %s", 
+				khal, cal[currentCal], icsFile);
 			system(commandString);
 			return 0;
 
@@ -68,9 +51,8 @@ int processInput() {
 			selection = getInput();
 
 		} else if(selection == 's' || selection == 'S') { 
-			printCalendars(calendars);
-			printf("Enter name of calendar to use: ");
-			scanf("%s", currentCal);
+			printCalendars();
+			currentCal = getCalInput();
 			return printAll();
 		}
 
@@ -81,7 +63,7 @@ int processInput() {
 void printEvent() {
 
 	printf("Event name:\t%s\n", eventName);
-	printf("Organizer:\t%s - %s\n", organizerName, organizerEmail);
+	printf("Organizer:\t%s (%s)\n", organizerName, organizerEmail);
 	printf("Starting at:\t%s\t%s\n", startDate, startTime);
 	printf("Ending at:\t%s\t%s\n", endDate, endTime);
 	printf("\n--\n\n");
@@ -90,33 +72,22 @@ void printEvent() {
 void printMenu() {
 
 	printf("\n--\n\n");
-	printf("Current calendar file: %s\n\n", icsFile);
-	printf("Current calendar: %s\n\n", currentCal);
 	printf("a: Add to khal\n");
-	printf("s: Select calendar\n");
+	printf("s: Select calendar (%s)\n", cal[currentCal]);
 	printf("i: Launch ikhal\n");
 	printf("q: Quit\n");
 }
 
-int printCalendars(char *rawString) {
-
-	int maxCalendars = 10; // Anyone with more than ten calendars is crazy
-	char formattedCalendar[maxCalendars][50];
-	char *token;
-	int count = -1;
+int printCalendars() {
 	
-	token = strtok(rawString, ":");
+	printf("\nSelect calendar to use:\n");
 
-	for(int a = 0; a < maxCalendars; a++) {
-		if(token) {
-			count++;
-			strcpy(formattedCalendar[count], token);
+	for(int a = 0; a < maxCalendars; a++) { 
+		if(strlen(cal[a]) != 0) {
+			printf("%d: %s | ", a, cal[a]); 
 		}
-		token = strtok(NULL, ":");
 	}
-
-	printf("\n");
-	for(int a = 0; a <= count; a++) { printf("%d: %s\n", a, formattedCalendar[a]); }
+	printf("q: Abort");
 	printf("\n");
 
 	return 0;
@@ -135,18 +106,31 @@ int printAll() {
 	return processInput();
 }
 
-int main(int argc, char *argv[]) {
+int init(int argc) {
+
+	char checkKhalString[100];
+	sprintf(checkKhalString, "%s --version > /dev/null", khal);
+
+	if(system(checkKhalString) != 0) {
+		printf("khal not found! Make sure it is installed and in your path.\n");
+		return 1;
+	}
 
 	if(argc != 2) { 
 		printf("Usage: khaler <filename.ics>\n");
 		return 1;
 	}
 
-	strcpy(calendars, readKhalConfig());
-	if(strlen(calendars) == 0) { 
-		printf("No calendars found in khal configuration file.\n");
-		return 1;
-	}
+	int isCal = readKhalConfig();
+	if(isCal != 0) { return 1; }
+
+	return 0;
+}
+
+int main(int argc, char *argv[]) {
+
+	int returnCode;
+	if((returnCode = init(argc)) != 0) return returnCode;
 
 	int maxChars = 1024;
 	char buf[maxChars];

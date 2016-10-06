@@ -4,18 +4,18 @@
 
  */
 
+	
 #include "khaler.h"
 
-char returnString[100];
-
-char *readKhalConfig() {
+int readKhalConfig() {
 		
 	int maxChars = 1024;
+	int calCounter = 0;
+	char khalConfig[100];
 
 	char buf[maxChars];
 	char *token;
-	char *khalConfig = malloc(100);
-	char defaultCalKey[] = "default_calendar";
+	const char defaultCalKey[] = "default_calendar";
 
 	sprintf(khalConfig, "%s/.config/khal/khal.conf", getenv("HOME"));
 
@@ -23,35 +23,34 @@ char *readKhalConfig() {
 
 	if(file == NULL) { 
 		printf("File %s could not be opened.\n", khalConfig);
-		return NULL; }
+		return 1; 
+	}
 	else {
 		while(fgets(buf, maxChars, file)){
 
+			// Read calendar names enclosed in [[]]
 			if((token = strstr(buf, "[["))){
 				if(token) { 
 					token = token + 2;
-					token = strtok(token, "]]");
-					strcat(returnString, token);
-					strcat(returnString, ":");
+					strcpy(cal[calCounter], strtok(token, "]]"));
+					calCounter++;
 				}
 			}
 
 			// Find default and format
 			if((token = strstr(buf, defaultCalKey))) {
 				int a = strlen(defaultCalKey);
-				while(token[a] == ' ' || token[a] == '=')  a++;  
+				while(token[a] == ' ' || token[a] == '=') a++;  
 				token = strtok(token, "\n");
-				if(token) strcpy(currentCal, token + a); 
+				for(int b = 0; b < maxCalendars; b++) {
+					if(strcmp(token + a, cal[b]) == 0) { currentCal = b; }
+				}
 			}
 		}
 
-		// Stripping the trailing delimiter
-		char *lastPointer = returnString;
-		lastPointer[strlen(lastPointer) - 1] = 0;
-
-		// Setting first cal to current if no default has been set
-		if(strlen(currentCal) == 0) { strcpy(currentCal, strtok(returnString, ":")); }
-
-		return returnString;
+		if(strlen(cal[0]) == 0) {
+			printf("No calendars found in khal configuration file.\n");
+			return 1;
+		} else return 0;
 	} 
 }

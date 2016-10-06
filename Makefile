@@ -1,7 +1,7 @@
 CFLAGS=-Wall -g -I
 
 all:
-	cc -o khaler khaler.c getch.c datetime.c readkhalconfig.c
+	cc -o khaler khaler.c getch.c datetime.c readkhalconfig.c getinput.c
 
 clean:
 	rm -f khaler
