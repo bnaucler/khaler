@@ -21,17 +21,13 @@ application/octet-stream; khaler %s
 
 # TODO
 * Proper Makefile(?)
-* Investigate why khal import --batch fails to select calendar
-* Cat lines starting with whitespace
 * Smarter way to check for khal?
-* Attendee listing
-	- struct with name, email & RSVP
-	- organizer in struct?
-* Description listing
-* Improve error reporting from readKhalConfig()
-* Print functions to new .c
+* Attendee listing RSVP
+* Organizer in attendee array?
+* Print functions to new .c?
+* File parsing functions to new .c?
 * Reorganize project dir
-* File parsing as function
+* Convert \n in description
 * Separate parsing and print functions
 * Read up on and implement memory allocation methods
 * Support for ics via stdin(?)

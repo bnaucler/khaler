@@ -19,7 +19,14 @@
 
 #define maxCalendars 10			// Anyone with more than ten calendars is crazy
 #define maxCalName 20			// Max characters in calendar name
+#define maxname 100				// Longest name of person or event
+#define maxemail 100			// Longest email address
+#define maxatts 10				// We don't want to list more than 10 people
 #define showDays 3				// # of days when showing agenda
+
+// Text color definitions
+#define WHT "\033[1m\033[37m"
+#define RESET "\033[0m"
 
 extern int currentCal;
 extern char cal[maxCalendars][maxCalName];
