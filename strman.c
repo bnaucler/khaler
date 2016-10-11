@@ -66,7 +66,7 @@ char *repstr(char input[], char ostr[], char nstr[]) {
 
 	// char *output = malloc(totlen * newlen);
 	// char *output = calloc(((totlen / replen) * newlen), sizeof(char));
-	char *output = calloc(totlen * newlen, sizeof(char));
+	char *output = calloc((totlen / replen) * newlen, sizeof(char));
 
 	while(input[a]) {
 		if(input[(a+b)] == ostr[b]) {

@@ -107,7 +107,7 @@ int printCalendars() {
 
 int printAll() {
 
-	// system(clear);
+	system(clear);
 	printEvent();
 
 	sprintf(cstr, "%s agenda --days %d %s", khal, shdays, sdate);
