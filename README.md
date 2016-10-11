@@ -10,7 +10,7 @@ None whatsoever. Do whatever you want with it,
 and let me know if you find it useful.
 
 # Installation
-$ sudo make all install
+$ sudo make all install  
 The executable will be installed in /usr/local/bin/ (unless you edit the Makefile)
 
 # Usage
