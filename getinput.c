@@ -29,8 +29,8 @@ char getCalInput() {
 	for(;;) {
 		ch = getch();
 		if(isdigit(ch) != 0) { 
-			int calSelection = ch - '0'; // Hack, but C std
-			if(strlen(cal[calSelection]) != 0) return calSelection;
-		} else if (ch == 'q' || ch == 'Q') return currentCal;
+			int sel = ch - '0'; // Hack, but C std
+			if(strlen(cal[sel]) != 0) return sel;
+		} else if (ch == 'q' || ch == 'Q') return ccal;
 	}
 }

@@ -10,21 +10,22 @@
 const char delim[] = ":;=\r\n";
 const char khal[] = "khal";
 const char clear[] = "clear";
+const char which[] = "which"; // 'whereis' on some systems
 
 // Global variable declarations
 char cstr[100];
 
-int currentCal;
-char cal[maxCalendars][maxCalName];
+char cal[maxcal][maxcalname];
+int ccal;
 
 char evname[maxname];
-char organizerName[maxname];
-char organizerEmail[maxemail];
-char stime[8];
-char etime[8];
-char sdate[12];
-char edate[12];
-char descr[4096];
+char orgname[maxname];
+char orgemail[maxemail];
+char descr[bbch];
+char stime[tlen];
+char etime[tlen];
+char sdate[dlen];
+char edate[dlen];
 
 char attname[maxatts][maxname];
 char attemail[maxatts][maxname];
@@ -34,24 +35,24 @@ char *icsFile;
 
 int processInput() {
 
-	char selection = getInput();
+	char sel = getInput();
 
 	for(;;) {
 
-		if(selection == 'a' || selection == 'A') { 
+		if(sel == 'a' || sel == 'A') { 
 			sprintf(cstr, "%s import -a %s --batch %s", 
-				khal, cal[currentCal], icsFile);
+				khal, cal[ccal], icsFile);
 			system(cstr);
 			return 0;
 
-		} else if(selection == 'i' || selection == 'I') { 
+		} else if(sel == 'i' || sel == 'I') { 
 			sprintf(cstr, "%s interactive", khal);
 			system(cstr);
-			selection = getInput();
+			sel = getInput();
 
-		} else if(selection == 's' || selection == 'S') { 
+		} else if(sel == 's' || sel == 'S') { 
 			printCalendars();
-			currentCal = getCalInput();
+			ccal = getCalInput();
 			return printAll();
 		}
 
@@ -62,13 +63,15 @@ int processInput() {
 void printEvent() {
 
 	printf(WHT "Event name: " RESET "\t%s\n", evname);
-	printf(WHT "Organizer:" RESET "\t%s (%s)\n", organizerName, organizerEmail);
+	printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
 	printf(WHT "Starting at:" RESET "\t%s\t%s\n", sdate, stime);
 	printf(WHT "Ending at:" RESET "\t%s\t%s\n\n", edate, etime);
 	printf(WHT "Attendee list:" RESET "\n");
 
 	for(int a = 0; a < curatt; a++) {
-		if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
+		if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
+		else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
+		else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
 		printf("%s (%s)\n", attname[a], attemail[a]);
 	}
 
@@ -81,22 +84,22 @@ void printEvent() {
 void printMenu() {
 
 	printf("\n--\n\n");
-	printf("a: Add to khal\n");
-	printf("s: Select calendar (%s)\n", cal[currentCal]);
-	printf("i: Launch ikhal\n");
-	printf("q: Quit\n");
+	printf(WHT "a:" RESET " Add to khal\n");
+	printf(WHT "s:" RESET " Select calendar (%s)\n", cal[ccal]);
+	printf(WHT "i:" RESET " Launch ikhal\n");
+	printf(WHT "q:" RESET " Quit\n");
 }
 
 int printCalendars() {
 	
-	printf("\nSelect calendar to use:\n");
+	printf(WHT "\nSelect calendar to use:\n" RESET);
 
-	for(int a = 0; a < maxCalendars; a++) { 
+	for(int a = 0; a < maxcal; a++) { 
 		if(strlen(cal[a]) != 0) {
-			printf("%d: %s | ", a, cal[a]); 
+			printf(WHT "%d:" RESET " %s | ", a, cal[a]); 
 		}
 	}
-	printf("q: Abort");
+	printf(WHT "q:" RESET " Abort");
 	printf("\n");
 
 	return 0;
@@ -104,10 +107,10 @@ int printCalendars() {
 
 int printAll() {
 
-	system(clear);
+	// system(clear);
 	printEvent();
 
-	sprintf(cstr, "%s agenda --days %d %s", khal, showDays, sdate);
+	sprintf(cstr, "%s agenda --days %d %s", khal, shdays, sdate);
 	system(cstr);
 
 	printMenu();
@@ -117,10 +120,11 @@ int printAll() {
 
 int init(int argc) {
 
-	char checkKhalString[100];
-	sprintf(checkKhalString, "%s --version > /dev/null", khal);
+	// In case absolute path has been provided
+	if(strcmp(khal, "khal") == 0) sprintf(cstr, "%s khal > /dev/null", which); // faster
+	else sprintf(cstr, "%s --version > /dev/null", khal); // always accurate
 
-	if(system(checkKhalString) != 0) {
+	if(system(cstr) != 0) {
 		printf("khal not found! Make sure it is installed and in your path.\n");
 		return 1;
 	}
@@ -130,47 +134,46 @@ int init(int argc) {
 		return 1;
 	}
 
-	int isCal = readKhalConfig();
-	if(isCal != 0) { return 1; }
+	if(readKhalConfig()) { return 1; }
 
 	return 0;
 }
 
 void parseBuf(char *bbuf) {
 
-	char nameGrepKey[] = "SUMMARY";
-	char attendeeGrepKey[] = "ATTENDEE";
-	char organizerGrepKey[] = "ORGANIZER";
-	char emailGrepKey[] = "mailto";
-	char startGrepKey[] = "DTSTART";
-	char endGrepKey[] = "DTEND";
+	char namekey[] = "SUMMARY";
+	char attkey[] = "ATTENDEE";
+	char orgkey[] = "ORGANIZER";
+	char emailkey[] = "mailto";
+	char startkey[] = "DTSTART";
+	char endkey[] = "DTEND";
 	char descrkey[] = "DESCRIPTION";
 
 	char *token;
 
-	char bbuf2[4096];
+	char bbuf2[bbch];
 	strcpy(bbuf2, bbuf); // Ugly hack perhaps. There should be a better way.
 
-	if((token = strcasestr(bbuf, nameGrepKey))) { 
+	if((token = strcasestr(bbuf, namekey))) { 
 		token = strstr(token, ":");
 		token++;
 		strcpy(evname, token);
 	}
 	
-	if((token = strcasestr(bbuf, organizerGrepKey))) { 
+	if((token = strcasestr(bbuf, orgkey))) { 
 		token = strstr(token, "CN=");
 		token = strtok(token, delim);
-		strcpy(organizerName, strtok(NULL, delim));
-		token = strcasestr(bbuf2, emailGrepKey);
+		strcpy(orgname, strtok(NULL, delim));
+		token = strcasestr(bbuf2, emailkey);
 		token = strtok(token, delim);
-		if(token) strcpy(organizerEmail, strtok(NULL, delim));
+		if(token) strcpy(orgemail, strtok(NULL, delim));
 	}
 
-	if((token = strcasestr(bbuf, attendeeGrepKey))) { 
+	if((token = strcasestr(bbuf, attkey))) { 
 		token = strstr(token, "CN=");
 		token = strtok(token, delim);
 		if(token)strcpy(attname[curatt], strtok(NULL, delim));
-		token = strcasestr(bbuf2, emailGrepKey);
+		token = strcasestr(bbuf2, emailkey);
 		token = strtok(token, delim);
 		if(token) strcpy(attemail[curatt], strtok(NULL, delim));
 		curatt++;
@@ -179,11 +182,13 @@ void parseBuf(char *bbuf) {
 	if((token = strcasestr(bbuf, descrkey))) { 
 		token = strstr(token, ":");
 		token++;
-		// Ugly hack for MS Exchange
-		if(strcasecmp(token, "REMINDER") != 0) strcpy(descr, token);
+		if(strcasecmp(token, "REMINDER") != 0) {
+			strcpy(descr, repstr(token, "\\n", "\n"));
+			strcpy(descr, remchar(descr, '\\'));
+		}
 	}
 	
-	if((token = strcasestr(bbuf, startGrepKey))) { 
+	if((token = strcasestr(bbuf, startkey))) { 
 		token = strstr(token, ":");
 		token++;
 		if(token) {
@@ -192,7 +197,7 @@ void parseBuf(char *bbuf) {
 		}
 	}
 
-	if((token = strcasestr(bbuf, endGrepKey))) { 
+	if((token = strcasestr(bbuf, endkey))) { 
 		token = strstr(token, ":");
 		token++;
 		if(token) {
@@ -205,13 +210,11 @@ void parseBuf(char *bbuf) {
 
 int main(int argc, char *argv[]) {
 
-	int returnCode;
-	if((returnCode = init(argc)) != 0) return returnCode;
+	int ret;
+	if((ret = init(argc)) != 0) return ret;
 
-	int sbChars = 1024;
-	int bbChars = 4096;
-	char sbuf[sbChars];
-	char bbuf[bbChars];
+	char sbuf[sbch];
+	char bbuf[bbch];
 
 	icsFile = argv[1];
 	FILE* file = fopen(icsFile, "r");
@@ -220,7 +223,7 @@ int main(int argc, char *argv[]) {
 		printf("File %s could not be opened.\n", icsFile);
 		return 1; }
 	else { 
-		while(fgets(sbuf, sbChars, file)){
+		while(fgets(sbuf, sbch, file)){
 			strtok(sbuf, "\n");
 
 			// initial whitespace indicates broken line

@@ -9,41 +9,40 @@
 
 int readKhalConfig() {
 		
-	int maxChars = 1024;
-	int calCounter = 0;
-	char khalConfig[100];
+	int counter = 0;
+	char confpath[100];
 
-	char buf[maxChars];
+	char buf[sbch];
 	char *token;
-	const char defaultCalKey[] = "default_calendar";
+	const char defkey[] = "default_calendar";
 
-	sprintf(khalConfig, "%s/.config/khal/khal.conf", getenv("HOME"));
+	sprintf(confpath, "%s/.config/khal/khal.conf", getenv("HOME"));
 
-	FILE* file = fopen(khalConfig, "r");
+	FILE* file = fopen(confpath, "r");
 
 	if(file == NULL) { 
-		printf("File %s could not be opened.\n", khalConfig);
+		printf("File %s could not be opened.\n", confpath);
 		return 1; 
 	}
 	else {
-		while(fgets(buf, maxChars, file)){
+		while(fgets(buf, sbch, file)){
 
 			// Read calendar names enclosed in [[]]
 			if((token = strstr(buf, "[["))){
 				if(token) { 
-					token = token + 2;
-					strcpy(cal[calCounter], strtok(token, "]]"));
-					calCounter++;
+					token += 2;
+					strcpy(cal[counter], strtok(token, "]]"));
+					counter++;
 				}
 			}
 
 			// Find default and format
-			if((token = strstr(buf, defaultCalKey))) {
-				int a = strlen(defaultCalKey);
+			if((token = strstr(buf, defkey))) {
+				int a = strlen(defkey);
 				while(token[a] == ' ' || token[a] == '=') a++;  
 				token = strtok(token, "\n");
-				for(int b = 0; b < maxCalendars; b++) {
-					if(strcmp(token + a, cal[b]) == 0) { currentCal = b; }
+				for(int b = 0; b < maxcal; b++) {
+					if(strcmp(token + a, cal[b]) == 0) { ccal = b; }
 				}
 			}
 		}

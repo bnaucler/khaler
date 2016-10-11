@@ -17,19 +17,23 @@
 #include <ctype.h>
 #include <termios.h>
 
-#define maxCalendars 10			// Anyone with more than ten calendars is crazy
-#define maxCalName 20			// Max characters in calendar name
-#define maxname 100				// Longest name of person or event
-#define maxemail 100			// Longest email address
-#define maxatts 10				// We don't want to list more than 10 people
-#define showDays 3				// # of days when showing agenda
+#define maxcal			10			// Anyone with more than ten calendars is crazy
+#define maxcalname		20			// Max characters in calendar name
+#define maxname			100			// Longest name of person or event
+#define maxemail		100			// Longest email address
+#define maxatts			10			// We don't want to list more than 10 people
+#define shdays			3			// # of days when showing agenda
+#define sbch			1024		// Size of small file buffer
+#define bbch			4096		// Size of big file buffer
+#define tlen			8			// Length of time string
+#define dlen			12			// Length of date string
 
 // Text color definitions
-#define WHT "\033[1m\033[37m"
-#define RESET "\033[0m"
+#define WHT				"\033[1m\033[37m"
+#define RESET			"\033[0m"
 
-extern int currentCal;
-extern char cal[maxCalendars][maxCalName];
+extern int ccal;
+extern char cal[maxcal][maxcalname];
 
 // Forward declarations
 char getch();
@@ -40,5 +44,9 @@ char *formatTime(char *unformTime);
 int readKhalConfig();
 char getInput();
 char getCalInput();
+char *remchar(char *input, char ch);
+char *remstr(char *input, char *rem);
+char *repchar(char input[], char rch, char nch);
+char *repstr(char input[], char ostr[], char nstr[]);
 
 #endif
