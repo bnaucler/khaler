@@ -30,6 +30,7 @@
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
+#define RED				"\x1B[1m\033[31m"
 #define RESET			"\033[0m"
 
 extern int ccal;

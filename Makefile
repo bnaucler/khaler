@@ -1,10 +1,14 @@
-CFLAGS=-Wall -g -I
+CC = cc
+TARGET = khaler
+SOURCE = *.c
+DESTDIR = /usr/local/bin
+CFLAGS= -Wall -g
 
 all:
-	cc -o khaler khaler.c getch.c datetime.c readkhalconfig.c getinput.c strman.c
+	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCE)
 
 clean:
-	rm -f khaler
+	rm -f $(TARGET)
 
 install:
-	mv khaler /usr/local/bin
+	mv $(TARGET) $(DESTDIR)
