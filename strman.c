@@ -33,16 +33,16 @@ char *remstr(char *input, char *rem) {
 				b=0;
 			}
 			else b++;
-		} else { 
+		} else {
 			b=0;
 			output[a] = input[(a+c)];
-			a++; 
+			a++;
 		}
 	}
 	return output;
 }
 
-// Replaces all instances of char rep with char new
+// Replaces all instances of char rch with char nch
 char *repchar(char input[], char rch, char nch) {
 
 	size_t len = strlen(input);

@@ -7,7 +7,6 @@
 #include "khaler.h"
 
 // Global constants and variables that might need tweaking
-const char delim[] = ":;=\r\n";
 const char khal[] = "khal";
 const char clear[] = "clear";
 const char which[] = "which"; // 'whereis' on some systems
@@ -19,6 +18,7 @@ char cal[maxcal][maxcalname];
 int ccal;
 
 char evname[maxname];
+char location[maxname];
 char orgname[maxname];
 char orgemail[maxemail];
 char descr[bbch];
@@ -49,7 +49,7 @@ int processInput() {
 		} else if(sel == 'i' || sel == 'I') {
 			sprintf(cstr, "%s interactive", khal);
 			system(cstr);
-			sel = getInput();
+			return printAll();
 
 		} else if(sel == 's' || sel == 'S') {
 			printCalendars();
@@ -64,13 +64,12 @@ int processInput() {
 void printEvent() {
 
 	printf(WHT "Event name: " RESET "\t%s\n", evname);
+	if(strlen(location) > 0) printf(WHT "Location: " RESET "\t%s\n", location);
 	printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
 	printf(WHT "Starting at:" RESET "\t%s\t%s\n", sdate, stime);
 	printf(WHT "Ending at:" RESET "\t%s\t%s\n\n", edate, etime);
 
-
 	if(numatts > 1) {
-
 		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
 
 		for(int a = 0; a < curatt; a++) {
@@ -80,15 +79,9 @@ void printEvent() {
 			printf("%s (%s)\n", attname[a], attemail[a]);
 		}
 
-		if(numatts > curatt + 1) {
+		if(numatts > curatt + 1) printf("(%d more)\n", numatts - (curatt + 1));
 
-			int more = numatts - (curatt + 1); // add 1 for organizer
-			printf("(%d more)\n", more);
-		
-		}
-	} else {
-		printf(RED "\nNo attendees\n" RESET);
-	}
+	} else printf(RED "\nNo attendees\n" RESET);
 
 	if(strlen(descr) > 0) {
 		printf(WHT "\nDescription:\n" RESET);
@@ -158,9 +151,30 @@ int init(int argc) {
 	return 0;
 }
 
+int dupecheck() {
+
+	int count = 0;
+
+	for(int a = 0; a <= numatts; a++) {
+		if(strcmp(attemail[a], orgemail) == 0) {
+			for(int b = a; b <= maxatts; b++){
+				strcpy(attname[b], attname[(b+1)]);
+				strcpy(attemail[b], attemail[(b+1)]);
+			}
+			numatts--;
+			count++;
+		}
+	}
+
+	return count;
+}
+
 void parseBuf(char *bbuf) {
 
+	const char delim[] = ":;=\r\n";
+
 	char namekey[] = "SUMMARY";
+	char lockey[] = "LOCATION";
 	char attkey[] = "ATTENDEE";
 	char orgkey[] = "ORGANIZER";
 	char emailkey[] = "mailto";
@@ -179,6 +193,12 @@ void parseBuf(char *bbuf) {
 		strcpy(evname, token);
 	}
 
+	if((token = strcasestr(bbuf, lockey))) {
+		token = strstr(token, ":");
+		token++;
+		if(token) strcpy(location, token);
+	}
+
 	if((token = strcasestr(bbuf, orgkey))) {
 		if(strlen(orgname) == 0 || strlen(orgemail) == 0) {
 			token = strstr(token, "CN=");
@@ -186,6 +206,7 @@ void parseBuf(char *bbuf) {
 			if(token) {
 				numatts++;
 				strcpy(orgname, strtok(NULL, delim));
+				strcpy(orgname, remchar(orgname, '\"'));
 			}
 			token = strcasestr(bbuf2, emailkey);
 			token = strtok(token, delim);
@@ -194,15 +215,20 @@ void parseBuf(char *bbuf) {
 	}
 
 	if((token = strcasestr(bbuf, attkey))) {
-		numatts++;
-		if(curatt < numatts) {
-			token = strstr(token, "CN=");
-			token = strtok(token, delim);
-			if(token) strcpy(attname[curatt], strtok(NULL, delim));
-			token = strcasestr(bbuf2, emailkey);
-			token = strtok(token, delim);
-			if(token) strcpy(attemail[curatt], strtok(NULL, delim));
-			curatt++;
+		if(!strstr(bbuf2, "X-LOTUS") && strstr(bbuf2, ":")) {
+			numatts++;
+			if(curatt < numatts) {
+				token = strstr(token, "CN=");
+				token = strtok(token, delim);
+				if(token) {
+					strcpy(attname[curatt], strtok(NULL, delim));
+					strcpy(attname[curatt], remchar(attname[curatt], '\"'));
+				}
+				token = strcasestr(bbuf2, emailkey);
+				token = strtok(token, delim);
+				if(token) strcpy(attemail[curatt], strtok(NULL, delim));
+				curatt++;
+			}
 		}
 	}
 
@@ -232,7 +258,6 @@ void parseBuf(char *bbuf) {
 			strcpy(etime, formatTime(strtok(NULL,delim)));
 		}
 	}
-
 }
 
 int main(int argc, char *argv[]) {
@@ -262,6 +287,7 @@ int main(int argc, char *argv[]) {
 				strcpy(bbuf, sbuf);
 			}
 		}
+		dupecheck();
 	}
 
 	return printAll();

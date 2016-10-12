@@ -25,24 +25,24 @@ application/ics; khaler %s
 application/octet-stream; khaler %s**
 
 ## TODO
-* Proper Makefile(?)
 * Smarter way to check for khal?
-* Buffer khal agenda output for speed?
 * Attendee listing RSVP
 * Organizer in attendee array?
-* String matching for double listings of attendees (i.e from Lotus Notes)
 * Print functions to new .c?
 * File parsing functions to new .c?
 * Reorganize project dir
-* Redraw screen after closing ikhal
 * Read calendar colors from khal config?
 * Separate parsing and print functions
 * Read up on and implement memory allocation methods
 * Finding events in raw text (pipe from mutt)?
 	- As separate executable perhaps
+	- Or enable getopt()
 * Check for khal config in multiple locations
 * Sanitize calendar reading from khal config
 * RSVP via mutt pipe (the actual work)
+* Limit description length on term size?
+* Set description line break based on term size?
+* Remove trailing empty line(s) from description
 
 ## Disclaimer
 Quick and dirty. About half done and full of bugs. Have fun!

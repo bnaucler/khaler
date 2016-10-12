@@ -1,14 +1,14 @@
 /*
- 
+
 	readhkalconfig.c - file operations for khaler
 
  */
 
-	
+
 #include "khaler.h"
 
 int readKhalConfig() {
-		
+
 	int counter = 0;
 	char confpath[100];
 
@@ -20,16 +20,16 @@ int readKhalConfig() {
 
 	FILE* file = fopen(confpath, "r");
 
-	if(file == NULL) { 
+	if(file == NULL) {
 		printf("File %s could not be opened.\n", confpath);
-		return 1; 
+		return 1;
 	}
 	else {
 		while(fgets(buf, sbch, file)){
 
 			// Read calendar names enclosed in [[]]
 			if((token = strstr(buf, "[["))){
-				if(token) { 
+				if(token) {
 					token += 2;
 					strcpy(cal[counter], strtok(token, "]]"));
 					counter++;
@@ -39,7 +39,7 @@ int readKhalConfig() {
 			// Find default and format
 			if((token = strstr(buf, defkey))) {
 				int a = strlen(defkey);
-				while(token[a] == ' ' || token[a] == '=') a++;  
+				while(token[a] == ' ' || token[a] == '=') a++;
 				token = strtok(token, "\n");
 				for(int b = 0; b < maxcal; b++) {
 					if(strcmp(token + a, cal[b]) == 0) { ccal = b; }
@@ -51,5 +51,5 @@ int readKhalConfig() {
 			printf("No calendars found in khal configuration file.\n");
 			return 1;
 		} else return 0;
-	} 
+	}
 }
