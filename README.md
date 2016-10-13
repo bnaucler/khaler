@@ -38,11 +38,9 @@ application/octet-stream; khaler %s**
 	- As separate executable perhaps
 	- Or enable getopt()
 * Check for khal config in multiple locations
-* Sanitize calendar reading from khal config
+	- Break down readkhalconfig.c in multiple functions
 * RSVP via mutt pipe (the actual work)
 * Limit description length on term size?
-* Set description line break based on term size?
-* Remove trailing empty line(s) from description
 
 ## Disclaimer
 Quick and dirty. About half done and full of bugs. Have fun!

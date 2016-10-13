@@ -4,6 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Count occurences of ch in buf and returns result
+int cchar(char *buf, char ch) {
+
+	int count = 0;
+	int len = strlen(buf);
+
+	for(int a = 0; a < len; a++) { if(buf[a] == ch) count++; }
+
+	return count;
+
+}
+
 // Remove all occurances of char from string
 char *remchar(char *input, char ch) {
 
@@ -64,8 +76,6 @@ char *repstr(char input[], char ostr[], char nstr[]) {
 	size_t newlen = strlen(nstr);
 	int a = 0, b = 0, c = 0;
 
-	// char *output = malloc(totlen * newlen);
-	// char *output = calloc(((totlen / replen) * newlen), sizeof(char));
 	char *output = calloc((totlen / replen) * newlen, sizeof(char));
 
 	while(input[a]) {
@@ -87,4 +97,54 @@ char *repstr(char input[], char ostr[], char nstr[]) {
 
 	output[c] = '\0';
 	return output;
+}
+
+// Line break ostr at last space char - max unbroken line is blen
+char *breakline(char *ostr, int blen) {
+
+	size_t len = strlen(ostr);
+	char *nstr = calloc((len + 1), sizeof(char));
+	int last = 0;
+	int prev = 0;
+	int b = 0;
+
+	for(int a = 0; a < len; a++) {
+		if(isspace(ostr[a])) last = a;
+		if(b > blen) {
+			if(prev == last && last != 0) {
+				strcpy(nstr, "ERROR");
+				break;
+			}
+			nstr[last] = '\n';
+			prev = last;
+			a = last;
+			b = 0;
+		} else if (ostr[a] == '\n') {
+			nstr[a] = ostr[a];
+			b = 0;
+		} else nstr[a] = ostr[a];
+
+		b++;
+	}
+
+	nstr[(len+1)] = '\0';
+
+	return nstr;
+}
+
+// Removes line breaks at end of buf
+char *remtrail(char *buf) {
+
+	size_t len = strlen(buf);
+
+	char *buf2 = calloc(len, sizeof(char));
+
+	strcpy(buf2, buf);
+
+	for(int a = len - 1; a > 0; a--) {
+		if(buf[a] == '\n') buf2[a] = '\0';
+		else break;
+	}
+
+	return buf2;
 }

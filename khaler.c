@@ -68,6 +68,8 @@ void printEvent() {
 	printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
 	printf(WHT "Starting at:" RESET "\t%s\t%s\n", sdate, stime);
 	printf(WHT "Ending at:" RESET "\t%s\t%s\n\n", edate, etime);
+	// printf(WHT "rows:" RESET "\t%d\n", termrow());
+	// printf(WHT "cols:" RESET "\t%d\n", termcol());
 
 	if(numatts > 1) {
 		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
@@ -83,12 +85,8 @@ void printEvent() {
 
 	} else printf(RED "\nNo attendees\n" RESET);
 
-	if(strlen(descr) > 0) {
-		printf(WHT "\nDescription:\n" RESET);
-		printf("%s\n", descr);
-	} else {
-		printf(RED "\nNo event description\n" RESET);
-		}
+	if(strlen(descr) > 0) printf(WHT "\nDescription:\n" RESET "%s\n", descr);
+	else printf(RED "\nNo event description\n" RESET);
 
 	printf("\n--\n\n");
 }
@@ -116,6 +114,7 @@ int printCalendars() {
 
 	return 0;
 }
+
 
 int printAll() {
 
@@ -238,6 +237,8 @@ void parseBuf(char *bbuf) {
 		if(strcasecmp(token, "REMINDER") != 0) {
 			strcpy(descr, repstr(token, "\\n", "\n"));
 			strcpy(descr, remchar(descr, '\\'));
+			strcpy(descr, breakline(descr, termcol()));
+			strcpy(descr, remtrail(descr));
 		}
 	}
 

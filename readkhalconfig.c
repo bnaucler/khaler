@@ -4,12 +4,13 @@
 
  */
 
-
 #include "khaler.h"
 
 int readKhalConfig() {
 
 	int counter = 0;
+	bool incal = 0;
+
 	char confpath[100];
 
 	char buf[sbch];
@@ -27,8 +28,20 @@ int readKhalConfig() {
 	else {
 		while(fgets(buf, sbch, file)){
 
+		// Determine if reading from [calendars] section
+			if((token = strstr(buf, "["))){
+				token++;
+				if(token) token = strtok(token, "]");
+				if(token) {
+					if(strcmp(token, "calendars") == 0) incal = 1;
+					else if(!strstr(token, "[")) {
+						incal = 0;
+					}
+				}
+			}
+
 			// Read calendar names enclosed in [[]]
-			if((token = strstr(buf, "[["))){
+			if(((token = strstr(buf, "[[")) && incal)) {
 				if(token) {
 					token += 2;
 					strcpy(cal[counter], strtok(token, "]]"));

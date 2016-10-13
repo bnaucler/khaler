@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/ioctl.h>
 #include <string.h>
 #include <ctype.h>
 #include <termios.h>
@@ -33,21 +34,28 @@
 #define RED				"\x1B[1m\033[31m"
 #define RESET			"\033[0m"
 
+// Global variables
 extern int ccal;
 extern char cal[maxcal][maxcalname];
 
 // Forward declarations
 char getch();
+int termcol();
+int termrow();
 int printAll();
 int printCalendars();
-char *formatDate(char *unformDate);
-char *formatTime(char *unformTime);
 int readKhalConfig();
 char getInput();
 char getCalInput();
+char *formatDate(char *unformDate);
+char *formatTime(char *unformTime);
+
+int cchar(char *buf, char ch);
 char *remchar(char *input, char ch);
 char *remstr(char *input, char *rem);
 char *repchar(char input[], char rch, char nch);
 char *repstr(char input[], char ostr[], char nstr[]);
+char *breakline(char *ostr, int blen);
+char *remtrail(char *buf);
 
 #endif
