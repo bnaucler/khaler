@@ -1,5 +1,5 @@
 /*
- 
+
 	getch.c - enables reading of one character at the time, without echo
 
 	Found the base for this at some random place on the internet.

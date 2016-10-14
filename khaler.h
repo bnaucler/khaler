@@ -31,22 +31,45 @@
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
-#define RED				"\x1B[1m\033[31m"
+#define RED				"\x1B[2m\033[31m"
+#define GREEN			"\x1B[2m\033[32m"
+#define YELLOW			"\x1B[2m\033[33m"
 #define RESET			"\033[0m"
 
 // Global variables
 extern int ccal;
 extern char cal[maxcal][maxcalname];
 
+extern char evname[maxname];
+extern char location[maxname];
+extern char orgname[maxname];
+extern char orgemail[maxemail];
+extern char descr[bbch];
+extern char stime[tlen];
+extern char etime[tlen];
+extern char sdate[dlen];
+extern char edate[dlen];
+
+extern char attname[maxatts][maxname];
+extern char attemail[maxatts][maxname];
+extern int attrsvp[maxatts];
+extern int numatts;
+extern int curatt;
+
 // Forward declarations
 char getch();
 int termcol();
 int termrow();
+
 int printAll();
 int printCalendars();
 int readKhalConfig();
+
+void parseBuf(char *bbuf);
+
 char getInput();
 char getCalInput();
+
 char *formatDate(char *unformDate);
 char *formatTime(char *unformTime);
 

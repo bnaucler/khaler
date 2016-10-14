@@ -15,7 +15,7 @@ const char which[] = "which"; // 'whereis' on some systems
 char cstr[100];
 
 char cal[maxcal][maxcalname];
-int ccal;
+int ccal = 0;
 
 char evname[maxname];
 char location[maxname];
@@ -29,8 +29,9 @@ char edate[dlen];
 
 char attname[maxatts][maxname];
 char attemail[maxatts][maxname];
-int numatts = 0;
-int curatt = 0;
+int attrsvp[maxatts];
+
+int numatts = 0, curatt = 0;
 
 char *icsFile;
 
@@ -75,10 +76,20 @@ void printEvent() {
 		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
 
 		for(int a = 0; a < curatt; a++) {
+
+			char rsvpstr[40];
+
 			if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
 			else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
 			else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
-			printf("%s (%s)\n", attname[a], attemail[a]);
+
+			if(attrsvp[a] == 1) sprintf(rsvpstr, YELLOW "No response" RESET);
+			else if(attrsvp[a] == 2) sprintf(rsvpstr, GREEN "Accepted" RESET);
+			else if(attrsvp[a] == 3) sprintf(rsvpstr, YELLOW "Tentative" RESET);
+			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
+			else strcpy(rsvpstr, "Unknown");
+
+			printf("%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
 		}
 
 		if(numatts > curatt + 1) printf("(%d more)\n", numatts - (curatt + 1));
@@ -168,99 +179,6 @@ int dupecheck() {
 	return count;
 }
 
-void parseBuf(char *bbuf) {
-
-	const char delim[] = ":;=\r\n";
-
-	char namekey[] = "SUMMARY";
-	char lockey[] = "LOCATION";
-	char attkey[] = "ATTENDEE";
-	char orgkey[] = "ORGANIZER";
-	char emailkey[] = "mailto";
-	char startkey[] = "DTSTART";
-	char endkey[] = "DTEND";
-	char descrkey[] = "DESCRIPTION";
-
-	char *token;
-
-	char bbuf2[bbch];
-	strcpy(bbuf2, bbuf); // Ugly hack perhaps. There should be a better way.
-
-	if((token = strcasestr(bbuf, namekey))) {
-		token = strstr(token, ":");
-		token++;
-		strcpy(evname, token);
-	}
-
-	if((token = strcasestr(bbuf, lockey))) {
-		token = strstr(token, ":");
-		token++;
-		if(token) strcpy(location, token);
-	}
-
-	if((token = strcasestr(bbuf, orgkey))) {
-		if(strlen(orgname) == 0 || strlen(orgemail) == 0) {
-			token = strstr(token, "CN=");
-			token = strtok(token, delim);
-			if(token) {
-				numatts++;
-				strcpy(orgname, strtok(NULL, delim));
-				strcpy(orgname, remchar(orgname, '\"'));
-			}
-			token = strcasestr(bbuf2, emailkey);
-			token = strtok(token, delim);
-			if(token) strcpy(orgemail, strtok(NULL, delim));
-		}
-	}
-
-	if((token = strcasestr(bbuf, attkey))) {
-		if(!strstr(bbuf2, "X-LOTUS") && strstr(bbuf2, ":")) {
-			numatts++;
-			if(curatt < numatts) {
-				token = strstr(token, "CN=");
-				token = strtok(token, delim);
-				if(token) {
-					strcpy(attname[curatt], strtok(NULL, delim));
-					strcpy(attname[curatt], remchar(attname[curatt], '\"'));
-				}
-				token = strcasestr(bbuf2, emailkey);
-				token = strtok(token, delim);
-				if(token) strcpy(attemail[curatt], strtok(NULL, delim));
-				curatt++;
-			}
-		}
-	}
-
-	if((token = strcasestr(bbuf, descrkey))) {
-		token = strstr(token, ":");
-		token++;
-		if(strcasecmp(token, "REMINDER") != 0) {
-			strcpy(descr, repstr(token, "\\n", "\n"));
-			strcpy(descr, remchar(descr, '\\'));
-			strcpy(descr, breakline(descr, termcol()));
-			strcpy(descr, remtrail(descr));
-		}
-	}
-
-	if((token = strcasestr(bbuf, startkey))) {
-		token = strstr(token, ":");
-		token++;
-		if(token) {
-			strcpy(sdate, formatDate(strtok(token, "T")));
-			strcpy(stime, formatTime(strtok(NULL,delim)));
-		}
-	}
-
-	if((token = strcasestr(bbuf, endkey))) {
-		token = strstr(token, ":");
-		token++;
-		if(token) {
-			strcpy(edate, formatDate(strtok(token, "T")));
-			strcpy(etime, formatTime(strtok(NULL,delim)));
-		}
-	}
-}
-
 int main(int argc, char *argv[]) {
 
 	int ret;
@@ -288,6 +206,7 @@ int main(int argc, char *argv[]) {
 				strcpy(bbuf, sbuf);
 			}
 		}
+
 		dupecheck();
 	}
 

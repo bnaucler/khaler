@@ -1,5 +1,5 @@
 # khaler v0.2A
-A parser for .ics files which feeds the data into khal.  
+A parser for .ics files which feeds the data into [khal](https://lostpackets.de/khal/).  
 
 ## Written by:  
 Björn Westerberg Nauclér 2016  
@@ -26,12 +26,14 @@ application/octet-stream; khaler %s**
 
 ## TODO
 * Smarter way to check for khal?
-* Attendee listing RSVP
+* Attendee listing RSVP delegation
+* Include participation roles (req, opt, non)
 * Organizer in attendee array?
+* Implement popen for reading khal agenda
+	- Read calendar colors from khal config?
+* Time zone corrections
 * Print functions to new .c?
-* File parsing functions to new .c?
 * Reorganize project dir
-* Read calendar colors from khal config?
 * Separate parsing and print functions
 * Read up on and implement memory allocation methods
 * Finding events in raw text (pipe from mutt)?

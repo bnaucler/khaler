@@ -15,6 +15,7 @@ int readKhalConfig() {
 
 	char buf[sbch];
 	char *token;
+	const char calkey[] = "calendars";
 	const char defkey[] = "default_calendar";
 
 	sprintf(confpath, "%s/.config/khal/khal.conf", getenv("HOME"));
@@ -33,7 +34,7 @@ int readKhalConfig() {
 				token++;
 				if(token) token = strtok(token, "]");
 				if(token) {
-					if(strcmp(token, "calendars") == 0) incal = 1;
+					if(strcmp(token, calkey) == 0) incal = 1;
 					else if(!strstr(token, "[")) {
 						incal = 0;
 					}

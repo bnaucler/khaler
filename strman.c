@@ -54,7 +54,7 @@ char *remstr(char *input, char *rem) {
 	return output;
 }
 
-// Replaces all instances of char rch with char nch
+// Replaces all instances of rch with nch
 char *repchar(char input[], char rch, char nch) {
 
 	size_t len = strlen(input);
@@ -68,7 +68,7 @@ char *repchar(char input[], char rch, char nch) {
 	return output;
 }
 
-// Replaces all instances of string rep with string new
+// Replaces all instances of ostr with nstr
 char *repstr(char input[], char ostr[], char nstr[]) {
 
 	size_t totlen = strlen(input);
@@ -104,9 +104,7 @@ char *breakline(char *ostr, int blen) {
 
 	size_t len = strlen(ostr);
 	char *nstr = calloc((len + 1), sizeof(char));
-	int last = 0;
-	int prev = 0;
-	int b = 0;
+	int last = 0, prev = 0, b = 0;
 
 	for(int a = 0; a < len; a++) {
 		if(isspace(ostr[a])) last = a;
@@ -123,12 +121,10 @@ char *breakline(char *ostr, int blen) {
 			nstr[a] = ostr[a];
 			b = 0;
 		} else nstr[a] = ostr[a];
-
 		b++;
 	}
 
 	nstr[(len+1)] = '\0';
-
 	return nstr;
 }
 
@@ -136,7 +132,6 @@ char *breakline(char *ostr, int blen) {
 char *remtrail(char *buf) {
 
 	size_t len = strlen(buf);
-
 	char *buf2 = calloc(len, sizeof(char));
 
 	strcpy(buf2, buf);
