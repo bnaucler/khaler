@@ -6,7 +6,7 @@
 
 #include "khaler.h"
 
-// Global constants and variables that might need tweaking
+// Global constants that might need tweaking
 const char khal[] = "khal";
 const char clear[] = "clear";
 const char which[] = "which"; // 'whereis' on some systems
@@ -22,16 +22,21 @@ char location[maxname];
 char orgname[maxname];
 char orgemail[maxemail];
 char descr[bbch];
-char stime[tlen];
-char etime[tlen];
-char sdate[dlen];
-char edate[dlen];
+int stime = 0;
+int etime = 0;
+int syear = 0;
+int smonth = 0;
+int sday = 0;
+int eyear = 0;
+int emonth = 0;
+int eday = 0;
 
 char attname[maxatts][maxname];
 char attemail[maxatts][maxname];
 int attrsvp[maxatts];
 
 int numatts = 0, curatt = 0;
+int toff = 0;
 
 char *icsFile;
 
@@ -64,13 +69,25 @@ int processInput() {
 
 void printEvent() {
 
+	bool sameday = 0;
+
+	if(eyear == syear && emonth == smonth && eday == sday) sameday = 1;
+
 	printf(WHT "Event name: " RESET "\t%s\n", evname);
+
 	if(strlen(location) > 0) printf(WHT "Location: " RESET "\t%s\n", location);
 	printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
-	printf(WHT "Starting at:" RESET "\t%s\t%s\n", sdate, stime);
-	printf(WHT "Ending at:" RESET "\t%s\t%s\n\n", edate, etime);
-	// printf(WHT "rows:" RESET "\t%d\n", termrow());
-	// printf(WHT "cols:" RESET "\t%d\n", termcol());
+
+	if(sameday) {
+		printf(WHT "Time:" RESET "\t\t%04d-%02d-%02d\t%02d:%02d - %02d:%02d\n\n",
+				syear, smonth, sday, (stime / 60), (stime % 60),
+				(etime / 60), (etime % 60));
+	} else {
+		printf(WHT "Starting at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n",
+				syear, smonth, sday, (stime / 60), (stime % 60));
+		printf(WHT "Ending at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n\n",
+				eyear, emonth, eday, (etime / 60), (etime % 60));
+	}
 
 	if(numatts > 1) {
 		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
@@ -132,7 +149,8 @@ int printAll() {
 	system(clear);
 	printEvent();
 
-	sprintf(cstr, "%s agenda --days %d %s", khal, shdays, sdate);
+	sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
+			khal, shdays, syear, smonth, sday);
 	system(cstr);
 
 	printMenu();
@@ -157,6 +175,9 @@ int init(int argc) {
 	}
 
 	if(readKhalConfig()) { return 1; }
+
+	toff = toffset();
+	settzkeys(isdls());
 
 	return 0;
 }
@@ -206,6 +227,9 @@ int main(int argc, char *argv[]) {
 				strcpy(bbuf, sbuf);
 			}
 		}
+
+		stime -= (toff/60);
+		etime -= (toff/60);
 
 		dupecheck();
 	}

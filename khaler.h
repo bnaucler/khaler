@@ -17,6 +17,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <termios.h>
+#include <time.h>
 
 #define maxcal			10			// Anyone with more than ten calendars is crazy
 #define maxcalname		20			// Max characters in calendar name
@@ -28,6 +29,7 @@
 #define bbch			4096		// Size of big file buffer
 #define tlen			8			// Length of time string
 #define dlen			12			// Length of date string
+#define klen			20			// Max size of variable grep key
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
@@ -45,16 +47,25 @@ extern char location[maxname];
 extern char orgname[maxname];
 extern char orgemail[maxemail];
 extern char descr[bbch];
-extern char stime[tlen];
-extern char etime[tlen];
-extern char sdate[dlen];
-extern char edate[dlen];
+extern int stime;
+extern int etime;
+extern int syear;
+extern int smonth;
+extern int sday;
+extern int eyear;
+extern int emonth;
+extern int eday;
 
 extern char attname[maxatts][maxname];
 extern char attemail[maxatts][maxname];
 extern int attrsvp[maxatts];
 extern int numatts;
 extern int curatt;
+
+extern char tzin[klen];
+extern char tzout[klen];
+extern bool intz;
+extern int toff;
 
 // Forward declarations
 char getch();
@@ -70,8 +81,12 @@ void parseBuf(char *bbuf);
 char getInput();
 char getCalInput();
 
-char *formatDate(char *unformDate);
-char *formatTime(char *unformTime);
+int toffset();
+int isdls();
+void settzkeys(int dls);
+int contime(char *uftime);
+void consdate(char *ufdate);
+void conedate(char *ufdate);
 
 int cchar(char *buf, char ch);
 char *remchar(char *input, char ch);

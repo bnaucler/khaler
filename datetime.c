@@ -6,38 +6,57 @@
 
 #include "khaler.h"
 
-char *formatTime(char *unformTime) {
+int toffset() {
 
-	const char timeDelim = ':';
+	time_t t = time(NULL);
+	struct tm lt = {0};
 
-	char h[2];
-	char m[2];
-	char *formTime = malloc(sizeof(unformTime));
+	localtime_r(&t, &lt);
 
-	for(int a = 0; a < 2; a++) { h[a] = unformTime[a]; }
-	for(int a = 0; a < 2; a++) { m[a] = unformTime[a+2]; }
-
-	sprintf(formTime, "%c%c%c%c%c", h[0], h[1], timeDelim, m[0], m[1]);
-
-	return formTime;
+	return lt.tm_gmtoff;
 }
 
-char *formatDate(char *unformDate) {
+int isdls() {
 
-	const char dateDelim = '-';
+	time_t t = time(NULL);
+	struct tm lt = {0};
 
-	char y[4];
-	char m[2];
-	char d[2];
-	char *formDate = malloc(sizeof(unformDate) + 2); // Add 2 for delimiters
+	localtime_r(&t, &lt);
 
-	for(int a = 0; a < 4; a++) { y[a] = unformDate[a]; }
-	for(int a = 0; a < 2; a++) { m[a] = unformDate[a+4]; }
-	for(int a = 0; a < 2; a++) { d[a] = unformDate[a+6]; }
+	return lt.tm_isdst;
+}
 
-	sprintf(formDate, "%c%c%c%c%c%c%c%c%c%c",
-			y[0], y[1], y[2], y[3], dateDelim,
-			m[0], m[1], dateDelim, d[0], d[1]);
+void settzkeys(int dls) {
 
-	return formDate;
+	if(dls > 0) {
+		strcpy(tzin, "BEGIN:DAYLIGHT");
+		strcpy(tzout, "END:DAYLIGHT");
+	}
+	else if(dls == 0) {
+		strcpy(tzin, "BEGIN:STANDARD");
+		strcpy(tzout, "END:STANDARD");
+	}
+}
+
+int contime(char *uftime) {
+
+	return ((atoi(uftime) / 100) % 100) + ((atoi(uftime) / 10000) * 60);
+}
+
+void consdate(char *ufdate) {
+
+	int raw = atoi(ufdate);
+
+	syear = raw / 10000;
+	smonth = (raw % 10000) / 100;
+	sday = raw % 100;
+}
+
+void conedate(char *ufdate) {
+
+	int raw = atoi(ufdate);
+
+	eyear = raw / 10000;
+	emonth = (raw % 10000) / 100;
+	eday = raw % 100;
 }

@@ -19,7 +19,7 @@ int cchar(char *buf, char ch) {
 // Remove all occurances of char from string
 char *remchar(char *input, char ch) {
 
-	char *output = malloc(strlen(input));
+	char *output = calloc(strlen(input) + 1, sizeof(char));
 	int a = 0, b = 0;
 
 	for(a = 0; a < strlen(input); a++) {
@@ -32,7 +32,7 @@ char *remchar(char *input, char ch) {
 // Remove all occurances of substring from string
 char *remstr(char *input, char *rem) {
 
-	char *output = malloc(sizeof(input));
+	char *output = calloc(sizeof(input) + 1, sizeof(char));
 	int remlen = strlen(rem);
 	int a = 0, b = 0, c = 0;
 
@@ -58,7 +58,7 @@ char *remstr(char *input, char *rem) {
 char *repchar(char input[], char rch, char nch) {
 
 	size_t len = strlen(input);
-	char *output = malloc(len);
+	char *output = calloc(len + 1, sizeof(char));
 
 	for(int a = 0; a < len; a++) {
 		if(input[a] == rch) output[a] = nch;
@@ -76,7 +76,7 @@ char *repstr(char input[], char ostr[], char nstr[]) {
 	size_t newlen = strlen(nstr);
 	int a = 0, b = 0, c = 0;
 
-	char *output = calloc((totlen / replen) * newlen, sizeof(char));
+	char *output = calloc((totlen + 1) * newlen, sizeof(char));
 
 	while(input[a]) {
 		if(input[(a+b)] == ostr[b]) {
@@ -124,7 +124,7 @@ char *breakline(char *ostr, int blen) {
 		b++;
 	}
 
-	nstr[(len+1)] = '\0';
+	// nstr[(len+1)] = '\0';
 	return nstr;
 }
 
@@ -132,7 +132,7 @@ char *breakline(char *ostr, int blen) {
 char *remtrail(char *buf) {
 
 	size_t len = strlen(buf);
-	char *buf2 = calloc(len, sizeof(char));
+	char *buf2 = calloc(len + 1, sizeof(char));
 
 	strcpy(buf2, buf);
 

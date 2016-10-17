@@ -32,8 +32,12 @@ application/octet-stream; khaler %s**
 * Implement popen for reading khal agenda
 	- Read calendar colors from khal config?
 * Time zone corrections
+	- Month length, leap years etc
 * Print functions to new .c?
+* Reduce number of global variables
+* Merge consdate and conedate
 * Reorganize project dir
+* Split printevent
 * Separate parsing and print functions
 * Read up on and implement memory allocation methods
 * Finding events in raw text (pipe from mutt)?

@@ -13,10 +13,24 @@
 #define orgkey			"ORGANIZER"
 #define startkey		"DTSTART"
 #define endkey			"DTEND"
+#define zonekey			"TZOFFSETTO"
 #define descrkey		"DESCRIPTION"
 #define rsvpkey			"PARTSTAT"
+#define evin			"BEGIN:VEVENT"
+#define evout			"END:VEVENT"
 
 #define delim			":;=\r\n"
+
+char tzin[klen];
+char tzout[klen];
+bool intz = 0;
+bool inev = 0;
+
+void settoff(char *token) {
+
+	token += (strlen(zonekey) + 2);
+	toff -= ((atoi(token) % 100) + ((atoi(token) / 100) * 60)) * 60;
+}
 
 void setname(char *token) {
 
@@ -97,8 +111,8 @@ void setstart(char *token) {
 	token = strstr(token, ":");
 	token++;
 	if(token) {
-		strcpy(sdate, formatDate(strtok(token, "T")));
-		strcpy(stime, formatTime(strtok(NULL,delim)));
+		consdate(strtok(token, "T"));
+		stime = contime(strtok(NULL,delim));
 	}
 }
 
@@ -107,24 +121,35 @@ void setend(char *token) {
 	token = strstr(token, ":");
 	token++;
 	if(token) {
-		strcpy(edate, formatDate(strtok(token, "T")));
-		strcpy(etime, formatTime(strtok(NULL, delim)));
+		conedate(strtok(token, "T"));
+		etime = contime(strtok(NULL,delim));
 	}
 }
 
 void parseBuf(char *bbuf) {
 
-	char *token = calloc(bbch, sizeof(char));
-	char bbuf2[bbch];
+	char *token = calloc(bbch + 1, sizeof(char));
 
-	// Ugly hack perhaps. There should be a better way.
-	strcpy(bbuf2, bbuf);
+	if(strcasestr(bbuf, tzin)) intz = 1;
+	if(strcasestr(bbuf, tzout)) intz = 0;
 
-	if((token = strcasestr(bbuf, namekey))) setname(token);
-	if((token = strcasestr(bbuf, lockey))) setloc(token);
-	if((token = strcasestr(bbuf, orgkey))) setorg(token, bbuf2);
-	if((token = strcasestr(bbuf, attkey))) setatt(token, bbuf2);
-	if((token = strcasestr(bbuf, descrkey))) setdescr(token);
-	if((token = strcasestr(bbuf, startkey))) setstart(token);
-	if((token = strcasestr(bbuf, endkey))) setend(token);
+	if(strcasestr(bbuf, evin)) inev = 1;
+	if(strcasestr(bbuf, evout)) inev = 0;
+
+	if((token = strcasestr(bbuf, zonekey)) && intz) settoff(token);
+
+	if(inev) {
+		char *bbuf2 = calloc(bbch + 1, sizeof(char));
+		strcpy(bbuf2, bbuf);
+
+		if((token = strcasestr(bbuf, namekey))) setname(token);
+		else if((token = strcasestr(bbuf, lockey))) setloc(token);
+		else if((token = strcasestr(bbuf, orgkey))) setorg(token, bbuf2);
+		else if((token = strcasestr(bbuf, attkey))) setatt(token, bbuf2);
+		else if((token = strcasestr(bbuf, descrkey))) setdescr(token);
+		else if((token = strcasestr(bbuf, startkey))) setstart(token);
+		else if((token = strcasestr(bbuf, endkey))) setend(token);
+
+		free(bbuf2);
+	}
 }
