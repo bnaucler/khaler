@@ -23,12 +23,11 @@
 #define maxcalname		20			// Max characters in calendar name
 #define maxname			100			// Longest name of person or event
 #define maxemail		100			// Longest email address
+#define maxpath			200			// Longest file path
 #define maxatts			10			// We don't want to list more than 10 people
 #define shdays			3			// # of days when showing agenda
 #define sbch			1024		// Size of small file buffer
 #define bbch			4096		// Size of big file buffer
-#define tlen			8			// Length of time string
-#define dlen			12			// Length of date string
 #define klen			20			// Max size of variable grep key
 
 // Text color definitions
@@ -39,6 +38,9 @@
 #define RESET			"\033[0m"
 
 // Global variables
+extern char khal[];
+extern char khalconf[];
+
 extern int ccal;
 extern char cal[maxcal][maxcalname];
 
@@ -46,6 +48,7 @@ extern char evname[maxname];
 extern char location[maxname];
 extern char orgname[maxname];
 extern char orgemail[maxemail];
+extern char ownemail[maxemail];
 extern char descr[bbch];
 extern int stime;
 extern int etime;
@@ -73,8 +76,10 @@ int termcol();
 int termrow();
 
 int printAll();
-int printCalendars();
+int printcal();
+int readconfig();
 int readKhalConfig();
+int readmuttconfig();
 
 void parseBuf(char *bbuf);
 

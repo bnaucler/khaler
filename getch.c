@@ -9,19 +9,19 @@
 
 #include "khaler.h"
 
-static struct termios old, new;
 
 char getch() {
 
-  char inputChar;
+	static struct termios old, new;
+	char ichar;
 
-  tcgetattr(0, &old);
-  new = old;
-  new.c_lflag &= ~ICANON;
-  new.c_lflag &= 0 ? ECHO : ~ECHO;
-  tcsetattr(0, TCSANOW, &new);
-  inputChar = getchar();
-  tcsetattr(0, TCSANOW, &old);
+	tcgetattr(0, &old);
+	new = old;
+	new.c_lflag &= ~ICANON;
+	new.c_lflag &= 0 ? ECHO : ~ECHO;
+	tcsetattr(0, TCSANOW, &new);
+	ichar = getchar();
+	tcsetattr(0, TCSANOW, &old);
 
-  return inputChar;
+	return ichar;
 }

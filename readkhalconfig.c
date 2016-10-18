@@ -1,6 +1,6 @@
 /*
 
-	readhkalconfig.c - file operations for khaler
+	readkhalconfig.c - file operations for khaler
 
  */
 
@@ -11,19 +11,17 @@ int readKhalConfig() {
 	int counter = 0;
 	bool incal = 0;
 
-	char confpath[100];
-
 	char buf[sbch];
 	char *token;
 	const char calkey[] = "calendars";
 	const char defkey[] = "default_calendar";
 
-	sprintf(confpath, "%s/.config/khal/khal.conf", getenv("HOME"));
+	sprintf(khalconf, "%s/.config/khal/khal.conf", getenv("HOME"));
 
-	FILE* file = fopen(confpath, "r");
+	FILE* file = fopen(khalconf, "r");
 
 	if(file == NULL) {
-		printf("File %s could not be opened.\n", confpath);
+		printf("File %s could not be opened.\n", khalconf);
 		return 1;
 	}
 	else {
@@ -53,7 +51,7 @@ int readKhalConfig() {
 			// Find default and format
 			if((token = strstr(buf, defkey))) {
 				int a = strlen(defkey);
-				while(token[a] == ' ' || token[a] == '=') a++;
+				while(isspace(token[a]) || token[a] == '=') a++;
 				token = strtok(token, "\n");
 				for(int b = 0; b < maxcal; b++) {
 					if(strcmp(token + a, cal[b]) == 0) { ccal = b; }

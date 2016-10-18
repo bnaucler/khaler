@@ -7,13 +7,10 @@
 #include "khaler.h"
 
 // Global constants that might need tweaking
-const char khal[] = "khal";
 const char clear[] = "clear";
 const char which[] = "which"; // 'whereis' on some systems
 
 // Global variable declarations
-char cstr[100];
-
 char cal[maxcal][maxcalname];
 int ccal = 0;
 
@@ -21,6 +18,7 @@ char evname[maxname];
 char location[maxname];
 char orgname[maxname];
 char orgemail[maxemail];
+char ownemail[maxemail];
 char descr[bbch];
 int stime = 0;
 int etime = 0;
@@ -38,17 +36,21 @@ int attrsvp[maxatts];
 int numatts = 0, curatt = 0;
 int toff = 0;
 
-char *icsFile;
+char khal[maxpath] = "khal";
+char khalconf[maxpath];
+
+char *icsfile;
 
 int processInput() {
 
 	char sel = getInput();
+	char cstr[maxpath];
 
 	for(;;) {
 
 		if(sel == 'a' || sel == 'A') {
 			sprintf(cstr, "%s import -a %s --batch %s",
-				khal, cal[ccal], icsFile);
+				khal, cal[ccal], icsfile);
 			system(cstr);
 			return 0;
 
@@ -58,7 +60,7 @@ int processInput() {
 			return printAll();
 
 		} else if(sel == 's' || sel == 'S') {
-			printCalendars();
+			printcal();
 			ccal = getCalInput();
 			return printAll();
 		}
@@ -67,7 +69,46 @@ int processInput() {
 	}
 }
 
-void printEvent() {
+void printatts() {
+
+	if(numatts > 1) {
+		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
+
+		for(int a = 0; a < curatt; a++) {
+
+			char rsvpstr[40];
+			bool self = 0;
+
+			if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
+			else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
+			else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
+
+			if(strcmp(attemail[a], ownemail) == 0) self = 1;
+
+			if(attrsvp[a] == 1) sprintf(rsvpstr, YELLOW "No response" RESET);
+			else if(attrsvp[a] == 2) sprintf(rsvpstr, GREEN "Accepted" RESET);
+			else if(attrsvp[a] == 3) sprintf(rsvpstr, YELLOW "Tentative" RESET);
+			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
+			else strcpy(rsvpstr, "Unknown");
+
+			if (self) printf(WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
+			else printf("%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
+		}
+
+		if(numatts > curatt + 1) printf("(%d more)\n", numatts - (curatt + 1));
+
+	} else printf(RED "\nNo attendees\n" RESET);
+}
+
+void printdescr() {
+
+	if(strlen(descr) > 0) printf(WHT "\nDescription:\n" RESET "%s\n", descr);
+	else printf(RED "\nNo event description\n" RESET);
+
+	printf("\n--\n\n");
+}
+
+void printhdr() {
 
 	bool sameday = 0;
 
@@ -89,34 +130,6 @@ void printEvent() {
 				eyear, emonth, eday, (etime / 60), (etime % 60));
 	}
 
-	if(numatts > 1) {
-		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
-
-		for(int a = 0; a < curatt; a++) {
-
-			char rsvpstr[40];
-
-			if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
-			else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
-			else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
-
-			if(attrsvp[a] == 1) sprintf(rsvpstr, YELLOW "No response" RESET);
-			else if(attrsvp[a] == 2) sprintf(rsvpstr, GREEN "Accepted" RESET);
-			else if(attrsvp[a] == 3) sprintf(rsvpstr, YELLOW "Tentative" RESET);
-			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
-			else strcpy(rsvpstr, "Unknown");
-
-			printf("%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
-		}
-
-		if(numatts > curatt + 1) printf("(%d more)\n", numatts - (curatt + 1));
-
-	} else printf(RED "\nNo attendees\n" RESET);
-
-	if(strlen(descr) > 0) printf(WHT "\nDescription:\n" RESET "%s\n", descr);
-	else printf(RED "\nNo event description\n" RESET);
-
-	printf("\n--\n\n");
 }
 
 void printMenu() {
@@ -128,7 +141,7 @@ void printMenu() {
 	printf(WHT "q:" RESET " Quit\n");
 }
 
-int printCalendars() {
+int printcal() {
 
 	printf(WHT "\nSelect calendar to use:\n" RESET);
 
@@ -146,8 +159,12 @@ int printCalendars() {
 
 int printAll() {
 
+	char cstr[maxpath];
+
 	system(clear);
-	printEvent();
+	printhdr();
+	printatts();
+	printdescr();
 
 	sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
 			khal, shdays, syear, smonth, sday);
@@ -160,14 +177,7 @@ int printAll() {
 
 int init(int argc) {
 
-	// In case absolute path has been provided
-	if(strcmp(khal, "khal") == 0) sprintf(cstr, "%s khal > /dev/null", which); // faster
-	else sprintf(cstr, "%s --version > /dev/null", khal); // always accurate
-
-	if(system(cstr) != 0) {
-		printf("khal not found! Make sure it is installed and in your path.\n");
-		return 1;
-	}
+	char cstr[maxpath];
 
 	if(argc != 2) {
 		printf("Usage: khaler <filename.ics>\n");
@@ -175,7 +185,17 @@ int init(int argc) {
 	}
 
 	if(readKhalConfig()) { return 1; }
+	readconfig();
+	if(strlen(ownemail) == 0) readmuttconfig();
 
+	// In case absolute path has been provided in config file
+	if(strcmp(khal, "khal") == 0) sprintf(cstr, "%s khal > /dev/null", which);
+	else sprintf(cstr, "test -x %s", khal);
+
+	if(system(cstr) != 0) {
+		printf("khal not found! Make sure it is installed and in your path.\n");
+		return 1;
+	}
 	toff = toffset();
 	settzkeys(isdls());
 
@@ -208,11 +228,11 @@ int main(int argc, char *argv[]) {
 	char sbuf[sbch];
 	char bbuf[bbch];
 
-	icsFile = argv[1];
-	FILE* file = fopen(icsFile, "r");
+	icsfile = argv[1];
+	FILE* file = fopen(icsfile, "r");
 
 	if(file == NULL) {
-		printf("File %s could not be opened.\n", icsFile);
+		printf("File %s could not be opened.\n", icsfile);
 		return 1; }
 	else {
 		while(fgets(sbuf, sbch, file)){
@@ -228,8 +248,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		stime -= (toff/60);
-		etime -= (toff/60);
+		stime += (toff/60);
+		etime += (toff/60);
 
 		dupecheck();
 	}
