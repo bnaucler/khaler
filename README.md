@@ -14,9 +14,9 @@ The executable will be installed in /usr/local/bin/
 
 ## Configuration
 You can create a .khaler file in your $HOME, containing:  
-`email=(your email address, can be repeated up to 10x)  
-kpath=(full path to khal)  
-kconfigpath=(full path to your khal.conf)`  
+`email=(your email address, can be repeated up to 10x)`  
+`kpath=(full path to khal)`  
+`kconfigpath=(full path to your khal.conf)`  
 Normally this is not needed. khaler can read your email address from .muttrc, find khal and your khal.conf unless they are located in odd places.
 
 ## Usage
@@ -24,9 +24,9 @@ It's pretty simple to use. Takes an .ics file as only argument and presents an i
 
 ## .mailcap
 If you would like to use khaler with mutt, add the following lines to your .mailcap.  
-`text/calendar; khaler %s  
-application/ics; khaler %s  
-application/octet-stream; khaler %s`
+`text/calendar; khaler %s`  
+`application/ics; khaler %s`  
+`application/octet-stream; khaler %s`
 
 ## TODO
 * Create die function?
