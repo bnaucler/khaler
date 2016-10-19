@@ -11,18 +11,26 @@
 #define ckcpathkey		"kconfigpath"
 #define csendstrkey		"sendstring"
 
+char *readconfobj(int cklen, char *token) {
+
+	while(isspace(token[cklen]) || token[cklen] == '=') cklen++;
+	token += cklen;
+	token = strtok(token, "\n");
+	token = remchar(token, '\"');
+
+	return token;
+}
+
 int readconfig() {
 
-	char confpath[100];
-
 	char buf[sbch];
-	char *token;
-	const char cfile[] = ".khaler";
+	char *token = calloc(sbch, sizeof(char));
+	char cfile[maxpath];
 	const char comstr = '#';
 
-	sprintf(confpath, "%s/%s", getenv("HOME"), cfile);
+	sprintf(cfile, "%s/%s", getenv("HOME"), cfilename);
 
-	FILE* file = fopen(confpath, "r");
+	FILE* file = fopen(cfile, "r");
 
 	if(file == NULL) return 1;
 	else {
@@ -31,34 +39,24 @@ int readconfig() {
 			if(buf[0] == comstr) continue;
 
 			if((token = strstr(buf, cmailkey))) {
-				int a = strlen(cmailkey);
-				while(isspace(token[a]) || token[a] == '=') a++;
-				token += a;
-				token = strtok(token, "\n");
-				token = remchar(token, '\"');
-				strcpy(ownemail, token);
+				int cklen = strlen(cmailkey);
+				strcpy(ownemail[curoemail], readconfobj(cklen, token));
+				curoemail++;
 			}
 
 			if((token = strstr(buf, ckpathkey))) {
-				int a = strlen(ckpathkey);
-				while(isspace(token[a]) || token[a] == '=') a++;
-				token += a;
-				token = strtok(token, "\n");
-				token = remchar(token, '\"');
-				strcpy(khal, token);
+				int cklen = strlen(ckpathkey);
+				strcpy(khal, readconfobj(cklen, token));
 			}
 
 			if((token = strstr(buf, ckcpathkey))) {
-				int a = strlen(ckcpathkey);
-				while(isspace(token[a]) || token[a] == '=') a++;
-				token += a;
-				token = strtok(token, "\n");
-				token = remchar(token, '\"');
-				strcpy(khalconf, token);
+				int cklen = strlen(ckcpathkey);
+				strcpy(khalconf, readconfobj(cklen, token));
 			}
-
 		}
 	}
 
+	fclose(file);
+	free(token);
 	return 0;
 }

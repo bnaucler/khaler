@@ -22,6 +22,7 @@
 #define maxcal			10			// Anyone with more than ten calendars is crazy
 #define maxcalname		20			// Max characters in calendar name
 #define maxname			100			// Longest name of person or event
+#define maxoemail		10			// Max number of own email addresses to store
 #define maxemail		100			// Longest email address
 #define maxpath			200			// Longest file path
 #define maxatts			10			// We don't want to list more than 10 people
@@ -29,6 +30,8 @@
 #define sbch			1024		// Size of small file buffer
 #define bbch			4096		// Size of big file buffer
 #define klen			20			// Max size of variable grep key
+
+#define cfilename		".khaler"
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
@@ -48,7 +51,7 @@ extern char evname[maxname];
 extern char location[maxname];
 extern char orgname[maxname];
 extern char orgemail[maxemail];
-extern char ownemail[maxemail];
+extern char ownemail[maxoemail][maxemail];
 extern char descr[bbch];
 extern int stime;
 extern int etime;
@@ -64,6 +67,7 @@ extern char attemail[maxatts][maxname];
 extern int attrsvp[maxatts];
 extern int numatts;
 extern int curatt;
+extern int curoemail;
 
 extern char tzin[klen];
 extern char tzout[klen];
@@ -80,11 +84,13 @@ int printcal();
 int readconfig();
 int readKhalConfig();
 int readmuttconfig();
+char *readconfobj(int cklen, char *token);
 
 void parseBuf(char *bbuf);
 
 char getInput();
 char getCalInput();
+char getemailinput();
 
 int toffset();
 int isdls();

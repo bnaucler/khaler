@@ -12,7 +12,7 @@ int readKhalConfig() {
 	bool incal = 0;
 
 	char buf[sbch];
-	char *token;
+	char *token = calloc(sbch, sizeof(char));
 	const char calkey[] = "calendars";
 	const char defkey[] = "default_calendar";
 
@@ -50,11 +50,10 @@ int readKhalConfig() {
 
 			// Find default and format
 			if((token = strstr(buf, defkey))) {
-				int a = strlen(defkey);
-				while(isspace(token[a]) || token[a] == '=') a++;
-				token = strtok(token, "\n");
+				int cklen = strlen(defkey);
+				strcpy(token, readconfobj(cklen, token));
 				for(int b = 0; b < maxcal; b++) {
-					if(strcmp(token + a, cal[b]) == 0) { ccal = b; }
+					if(strcmp(token, cal[b]) == 0) { ccal = b; }
 				}
 			}
 		}

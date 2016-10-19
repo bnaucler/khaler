@@ -18,7 +18,7 @@ char evname[maxname];
 char location[maxname];
 char orgname[maxname];
 char orgemail[maxemail];
-char ownemail[maxemail];
+char ownemail[maxoemail][maxemail];
 char descr[bbch];
 int stime = 0;
 int etime = 0;
@@ -34,12 +34,65 @@ char attemail[maxatts][maxname];
 int attrsvp[maxatts];
 
 int numatts = 0, curatt = 0;
+int curoemail = 0;
+int respemail = 0;
 int toff = 0;
 
 char khal[maxpath] = "khal";
 char khalconf[maxpath];
 
 char *icsfile;
+
+int writefile(char *fname, char *text) {
+
+	FILE *file = fopen(fname, "a");
+
+	if(file == NULL) return 1; 
+	else {
+		fprintf(file, "%s\n", text);
+		fclose(file);
+		return 0;
+	}
+}
+
+char *getl(char *ret, size_t len) {
+
+	fgets(ret, len, stdin);
+	ret[(strlen(ret) -1)] = '\0';
+	if(strlen(ret) > len) ret[len] = '\0';
+	return ret;
+}
+
+int mansetemail() {
+
+	char cfile[maxpath];
+	char prefix[] = "email=";
+
+	sprintf(cfile, "%s/%s", getenv("HOME"), cfilename);
+
+	printf("\nEnter your email address: ");
+	getl(ownemail[0], sizeof(ownemail[0]));
+
+	curoemail++;
+
+	printf("\nWrite '%s%s' to %s?\n", prefix, ownemail[0], cfile);
+	printf(WHT "y:" RESET " yes " WHT "n:" RESET
+			" no " WHT "r:" RESET " re-enter\n");
+
+	char sel = getemailinput();
+
+	for(;;) {
+		if(sel == 'y' || sel == 'Y') {
+			char *wrstring = calloc(strlen(prefix) + strlen(ownemail[0]) + 1, sizeof(char));
+			sprintf(wrstring, "%s%s", prefix, ownemail[0]);
+			writefile(cfile, wrstring);
+			free(wrstring);
+			return 0;
+		}
+		else if(sel == 'r' || sel == 'R') mansetemail();
+		else return 1;
+	}
+}
 
 int processInput() {
 
@@ -59,6 +112,10 @@ int processInput() {
 			system(cstr);
 			return printAll();
 
+		} else if(sel == 'e' || sel == 'E') {
+			mansetemail();
+			return printAll();
+
 		} else if(sel == 's' || sel == 'S') {
 			printcal();
 			ccal = getCalInput();
@@ -69,7 +126,21 @@ int processInput() {
 	}
 }
 
-void printatts() {
+int setrespemail() {
+
+	for(int a = 0; a < curatt; a++) {
+		for(int b = 0; b < curoemail; b++) {
+			if(strcmp(attemail[a], ownemail[b]) == 0) { 
+				respemail = b;
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
+void printatts(int respset) {
 
 	if(numatts > 1) {
 		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
@@ -77,13 +148,10 @@ void printatts() {
 		for(int a = 0; a < curatt; a++) {
 
 			char rsvpstr[40];
-			bool self = 0;
 
 			if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
 			else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
 			else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
-
-			if(strcmp(attemail[a], ownemail) == 0) self = 1;
 
 			if(attrsvp[a] == 1) sprintf(rsvpstr, YELLOW "No response" RESET);
 			else if(attrsvp[a] == 2) sprintf(rsvpstr, GREEN "Accepted" RESET);
@@ -91,7 +159,8 @@ void printatts() {
 			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
 			else strcpy(rsvpstr, "Unknown");
 
-			if (self) printf(WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
+			if (respset == 0 && a == respemail) 
+				printf(WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
 			else printf("%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
 		}
 
@@ -110,16 +179,15 @@ void printdescr() {
 
 void printhdr() {
 
-	bool sameday = 0;
-
-	if(eyear == syear && emonth == smonth && eday == sday) sameday = 1;
-
 	printf(WHT "Event name: " RESET "\t%s\n", evname);
 
 	if(strlen(location) > 0) printf(WHT "Location: " RESET "\t%s\n", location);
-	printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
 
-	if(sameday) {
+	if(strlen(orgname) > 0)
+		printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
+	else printf(WHT "Organizer:" RESET "\t%s\n", orgemail);
+
+	if(eyear == syear && emonth == smonth && eday == sday) {
 		printf(WHT "Time:" RESET "\t\t%04d-%02d-%02d\t%02d:%02d - %02d:%02d\n\n",
 				syear, smonth, sday, (stime / 60), (stime % 60),
 				(etime / 60), (etime % 60));
@@ -136,6 +204,7 @@ void printMenu() {
 
 	printf("\n--\n\n");
 	printf(WHT "a:" RESET " Add to khal\n");
+	if(strlen(ownemail[0]) == 0) printf(WHT "e:" RESET " Set email address\n");
 	printf(WHT "s:" RESET " Select calendar (%s)\n", cal[ccal]);
 	printf(WHT "i:" RESET " Launch ikhal\n");
 	printf(WHT "q:" RESET " Quit\n");
@@ -163,7 +232,7 @@ int printAll() {
 
 	system(clear);
 	printhdr();
-	printatts();
+	printatts(setrespemail());
 	printdescr();
 
 	sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
@@ -186,7 +255,7 @@ int init(int argc) {
 
 	if(readKhalConfig()) { return 1; }
 	readconfig();
-	if(strlen(ownemail) == 0) readmuttconfig();
+	if(strlen(ownemail[0]) == 0) readmuttconfig();
 
 	// In case absolute path has been provided in config file
 	if(strcmp(khal, "khal") == 0) sprintf(cstr, "%s khal > /dev/null", which);

@@ -6,13 +6,14 @@
 
 #include "khaler.h"
 
+#define omkey "set from"
+
 int readmuttconfig() {
 
 	char confpath[100];
 
 	char buf[sbch];
-	char *token;
-	const char omkey[] = "set from";
+	char *token = calloc(sbch, sizeof(char));
 
 	sprintf(confpath, "%s/.muttrc", getenv("HOME"));
 
@@ -23,16 +24,14 @@ int readmuttconfig() {
 		while(fgets(buf, sbch, file)){
 
 			if((token = strstr(buf, omkey))) {
-				int a = strlen(omkey);
-				while(isspace(token[a]) || token[a] == '=') a++;
-				token += a;
-				token = strtok(token, "\n");
-				token = remchar(token, '\"');
-				strcpy(ownemail, token);
+				int cklen = strlen(omkey);
+				strcpy(ownemail[0], readconfobj(cklen, token));
+				curoemail++;
 				return 0;
 			}
 		}
 	}
 
+	free(token);
 	return 1;
 }

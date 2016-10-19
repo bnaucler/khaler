@@ -143,3 +143,18 @@ char *remtrail(char *buf) {
 
 	return buf2;
 }
+
+// Creates a random string of length len
+char *randstr(const int len) {
+
+	char *rstr = calloc((len), sizeof(char));
+	char charset[] = "abcdefghijklmnopqrstuvwxyz";
+	time_t t;
+
+	srand((unsigned) time(&t));
+
+	for(int a = 0; a < len; a++) rstr[a] = charset[(rand() % strlen(charset))]; 
+	rstr[len] = '\0';
+
+	return rstr;
+}
