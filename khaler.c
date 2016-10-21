@@ -14,12 +14,15 @@ const char which[] = "which"; // 'whereis' on some systems
 char cal[maxcal][maxcalname];
 int ccal = 0;
 
+int debug = 0;
+
 char evname[maxname];
 char location[maxname];
 char orgname[maxname];
 char orgemail[maxemail];
 char ownemail[maxoemail][maxemail];
 char descr[bbch];
+bool haveagenda = 0;
 int stime = 0;
 int etime = 0;
 int syear = 0;
@@ -40,6 +43,8 @@ int toff = 0;
 
 char khal[maxpath] = "khal";
 char khalconf[maxpath];
+char pager[maxpath];
+char tmpdir[maxpath] = "/tmp";
 
 char *icsfile;
 
@@ -79,7 +84,7 @@ int mansetemail() {
 	printf(WHT "y:" RESET " yes " WHT "n:" RESET
 			" no " WHT "r:" RESET " re-enter\n");
 
-	char sel = getemailinput();
+	char sel = getin("ynr");
 
 	for(;;) {
 		if(sel == 'y' || sel == 'Y') {
@@ -96,29 +101,40 @@ int mansetemail() {
 
 int processInput() {
 
-	char sel = getInput();
 	char cstr[maxpath];
+	char opts[maxopts] = "aisq";
+
+	if(strlen(ownemail[0]) == 0) strcat(opts, "e");
+	if(debug) strcat(opts, "r");
+
+	char sel = getin(opts);
 
 	for(;;) {
 
-		if(sel == 'a' || sel == 'A') {
+		if(sel == 'a') {
 			sprintf(cstr, "%s import -a %s --batch %s",
 				khal, cal[ccal], icsfile);
 			system(cstr);
 			return 0;
 
-		} else if(sel == 'i' || sel == 'I') {
+		} else if(sel == 'i') {
 			sprintf(cstr, "%s interactive", khal);
 			system(cstr);
+			haveagenda = 0;
 			return printAll();
 
-		} else if(sel == 'e' || sel == 'E') {
+		} else if(sel == 'e') {
 			mansetemail();
 			return printAll();
 
-		} else if(sel == 's' || sel == 'S') {
+		} else if(sel == 'r') {
+			sprintf(cstr, "%s %s", pager, icsfile);
+			system(cstr);
+			return printAll();
+
+		} else if(sel == 's') {
 			printcal();
-			ccal = getCalInput();
+			ccal = getcalin();
 			return printAll();
 		}
 
@@ -140,10 +156,14 @@ int setrespemail() {
 	return 1;
 }
 
-void printatts(int respset) {
+int printatts(int respset) {
+
+	int llcount = 0;
+	char *tmp = calloc(mbch, sizeof(char));
 
 	if(numatts > 1) {
-		printf(WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
+		sprintf(tmp, WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
+		llcount += cpr(tmp);
 
 		for(int a = 0; a < curatt; a++) {
 
@@ -159,101 +179,197 @@ void printatts(int respset) {
 			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
 			else strcpy(rsvpstr, "Unknown");
 
-			if (respset == 0 && a == respemail) 
-				printf(WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
-			else printf("%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
+			if (respset == 0 && a == respemail)  {
+				sprintf(tmp, WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
+				llcount += cpr(tmp);
+			}
+			else {
+				sprintf(tmp, "%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
+				llcount += cpr(tmp);
+			}
 		}
 
-		if(numatts > curatt + 1) printf("(%d more)\n", numatts - (curatt + 1));
+		if(numatts > curatt + 1) {
+			sprintf(tmp, "(%d more)\n", numatts - (curatt + 1));
+			llcount += cpr(tmp);
+		}
 
-	} else printf(RED "\nNo attendees\n" RESET);
-}
-
-void printdescr() {
-
-	if(strlen(descr) > 0) printf(WHT "\nDescription:\n" RESET "%s\n", descr);
-	else printf(RED "\nNo event description\n" RESET);
-
-	printf("\n--\n\n");
-}
-
-void printhdr() {
-
-	printf(WHT "Event name: " RESET "\t%s\n", evname);
-
-	if(strlen(location) > 0) printf(WHT "Location: " RESET "\t%s\n", location);
-
-	if(strlen(orgname) > 0)
-		printf(WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
-	else printf(WHT "Organizer:" RESET "\t%s\n", orgemail);
-
-	if(eyear == syear && emonth == smonth && eday == sday) {
-		printf(WHT "Time:" RESET "\t\t%04d-%02d-%02d\t%02d:%02d - %02d:%02d\n\n",
-				syear, smonth, sday, (stime / 60), (stime % 60),
-				(etime / 60), (etime % 60));
 	} else {
-		printf(WHT "Starting at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n",
-				syear, smonth, sday, (stime / 60), (stime % 60));
-		printf(WHT "Ending at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n\n",
-				eyear, emonth, eday, (etime / 60), (etime % 60));
+		sprintf(tmp, RED "\nNo attendees\n" RESET);
+		llcount += cpr(tmp);
 	}
 
+	return llcount;
 }
 
-void printMenu() {
+int printdescr() {
 
-	printf("\n--\n\n");
-	printf(WHT "a:" RESET " Add to khal\n");
-	if(strlen(ownemail[0]) == 0) printf(WHT "e:" RESET " Set email address\n");
-	printf(WHT "s:" RESET " Select calendar (%s)\n", cal[ccal]);
-	printf(WHT "i:" RESET " Launch ikhal\n");
-	printf(WHT "q:" RESET " Quit\n");
+	int llcount = 0;
+	char *tmp = calloc(mbch, sizeof(char));
+
+	if(strlen(descr) > 0) {
+		sprintf(tmp, WHT "\nDescription:\n" RESET "%s\n", descr);
+		llcount += cpr(tmp);
+	}
+	else llcount += cpr(RED "\nNo event description\n" RESET);
+
+	llcount += cpr("\n--\n\n");
+
+	return llcount;
+}
+
+int printhdr() {
+
+	int llcount = 0;
+	char *tmp = calloc(mbch, sizeof(char));
+
+	sprintf(tmp, WHT "Event name: " RESET "\t%s\n", evname);
+	llcount += cpr(tmp);
+
+	if(strlen(location) > 0) {
+		sprintf(tmp, WHT "Location: " RESET "\t%s\n", location);
+		llcount += cpr(tmp);
+	}
+
+	if(strlen(orgname) > 0) {
+		sprintf(tmp, WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
+		llcount += cpr(tmp);
+	} else {
+		sprintf(tmp, WHT "Organizer:" RESET "\t%s\n", orgemail);
+		llcount += cpr(tmp);
+	}
+
+	if(eyear == syear && emonth == smonth && eday == sday) {
+		sprintf(tmp, WHT "Time:" RESET "\t\t%04d-%02d-%02d\t%02d:%02d - %02d:%02d\n\n",
+				syear, smonth, sday, (stime / 60), (stime % 60),
+				(etime / 60), (etime % 60));
+		llcount += cpr(tmp);
+	} else {
+		sprintf(tmp, WHT "Starting at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n",
+				syear, smonth, sday, (stime / 60), (stime % 60));
+		llcount += cpr(tmp);
+		sprintf(tmp, WHT "Ending at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n\n",
+				eyear, emonth, eday, (etime / 60), (etime % 60));
+		llcount += cpr(tmp);
+	}
+
+	return llcount;
+}
+
+int printMenu() {
+
+	int llcount = 0;
+	char *tmp = calloc(mbch, sizeof(char));
+
+	llcount += cpr("\n\n--\n\n");
+	llcount += cpr(WHT "a:" RESET " Add to khal\n");
+	if(strlen(ownemail[0]) == 0)
+		llcount += cpr(WHT "e:" RESET " Set email address\n");
+	sprintf(tmp, WHT "s:" RESET " Select calendar (%s)\n", cal[ccal]);
+	llcount += cpr(tmp);
+	if(debug) 
+		llcount += cpr(WHT "r:" RESET " View raw in pager\n");
+	llcount += cpr(WHT "i:" RESET " Launch ikhal\n");
+	llcount += cpr(WHT "q:" RESET " Quit\n");
+
+	return llcount;
 }
 
 int printcal() {
 
-	printf(WHT "\nSelect calendar to use:\n" RESET);
+	int llcount = 0;
+	char *tmp = calloc(mbch, sizeof(char));
+
+	llcount += cpr(WHT "\nSelect calendar to use:\n" RESET);
 
 	for(int a = 0; a < maxcal; a++) {
 		if(strlen(cal[a]) != 0) {
-			printf(WHT "%d:" RESET " %s | ", a, cal[a]);
+			sprintf(tmp, WHT "%d:" RESET " %s | ", a, cal[a]);
+			llcount += cpr(tmp);
 		}
 	}
-	printf(WHT "q:" RESET " Abort");
-	printf("\n");
+	llcount += cpr(WHT "q:" RESET " Abort");
+	llcount += cpr("\n");
 
-	return 0;
+	return llcount;
 }
 
+int cpr(char *buf) {
+
+	int count = cchar(buf, '\n');
+	printf("%s", buf);
+
+	return count;
+}
+
+char *readagenda(char *istr) {
+
+	char sbuf[sbch];
+	char sbuf2[sbch];
+	char bbuf[bbch] = "";
+	char *delim = "-";
+	char *erstr = calloc(mbch, sizeof(char));
+
+	sprintf(erstr, RED "Could not read khal agenda" RESET);
+
+	FILE *rcmd = popen(istr, "r");
+
+	if(rcmd == NULL) return erstr;
+	else { 
+		while(fgets(sbuf, sbch, rcmd)) {
+			strcpy(sbuf2, sbuf);
+			if(atoi(strtok(sbuf2, delim)) == syear) {
+				sprintf(sbuf2, WHT "%s" RESET, sbuf);
+				strcat(bbuf, sbuf2); 
+			}
+			else strcat(bbuf, sbuf); 
+		}
+	}
+
+	haveagenda = 1; 
+
+	return strcpy(bbuf, remtrail(bbuf));
+}
 
 int printAll() {
 
+	char agenda[bbch];
 	char cstr[maxpath];
+	int lcount = 0;
 
 	system(clear);
-	printhdr();
-	printatts(setrespemail());
-	printdescr();
+	lcount += printhdr();
+	lcount += printatts(setrespemail());
+	lcount += printdescr();
 
-	sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
-			khal, shdays, syear, smonth, sday);
-	system(cstr);
+	if(!haveagenda) {
+		sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
+				khal, shdays, syear, smonth, sday);
+		strcpy(agenda, readagenda(cstr));
+	} 
+	lcount += cpr(agenda);
 
-	printMenu();
+	lcount += printMenu();
+
+	if(debug) {
+		lcount += cpr("\n");
+		lcount++;
+		printf("Term size: %dx%d. This line: %d\n", termcol(), termrow(), lcount);
+	}
 
 	return processInput();
 }
 
-int init(int argc) {
+int init(int argc, char *execname) {
 
 	char cstr[maxpath];
 
 	if(argc != 2) {
-		printf("Usage: khaler <filename.ics>\n");
+		printf("Usage: %s <filename.ics>\n", execname);
 		return 1;
 	}
 
-	if(readKhalConfig()) { return 1; }
+	if(readkhalconfig()) { return 1; }
 	readconfig();
 	if(strlen(ownemail[0]) == 0) readmuttconfig();
 
@@ -292,7 +408,7 @@ int dupecheck() {
 int main(int argc, char *argv[]) {
 
 	int ret;
-	if((ret = init(argc)) != 0) return ret;
+	if((ret = init(argc, argv[0])) != 0) return ret;
 
 	char sbuf[sbch];
 	char bbuf[bbch];

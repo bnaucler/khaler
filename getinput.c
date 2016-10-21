@@ -6,30 +6,37 @@
 
 #include "khaler.h"
 
+// Not sure who wrote this. Thanks whoever you are
+char getch() {
+
+	static struct termios old, new;
+	char ichar;
+
+	tcgetattr(0, &old);
+	new = old;
+	new.c_lflag &= ~ICANON;
+	new.c_lflag &= 0 ? ECHO : ~ECHO;
+	tcsetattr(0, TCSANOW, &new);
+	ichar = getchar();
+	tcsetattr(0, TCSANOW, &old);
+
+	return ichar;
+}
+
 // Read one char without echo via getch
-char getInput() {
+char getin(char *valid) {
 
 	char ch;
+	int len = strlen(valid);
 
 	for(;;) {
-		ch = getch();
-
-		if (strlen(ownemail[0]) == 0) {
-			if(ch == 'q' || ch == 'Q' || ch == 'a' ||
-				ch == 'A' || ch == 'i' || ch == 'I' ||
-				ch == 'E' || ch == 'e' ||
-				ch == 's' || ch == 'S') return ch;
-
-		} else {
-			if(ch == 'q' || ch == 'Q' || ch == 'a' ||
-				ch == 'A' || ch == 'i' || ch == 'I' ||
-				ch == 's' || ch == 'S') return ch;
-		}
+		ch = tolower(getch());
+		for(int a = 0; a < len; a++) { if(ch == valid[a]) return ch; }
 	}
 }
 
 // Read one char without echo via getch and convert to int
-char getCalInput() {
+char getcalin() {
 
 	char ch;
 
@@ -39,17 +46,5 @@ char getCalInput() {
 			int sel = ch - '0'; // Hack, but C std
 			if(strlen(cal[sel]) != 0) return sel;
 		} else if (ch == 'q' || ch == 'Q') return ccal;
-	}
-}
-
-char getemailinput() {
-
-	char ch;
-
-	for(;;) {
-		ch = getch();
-
-		if(ch == 'y' || ch == 'Y' || ch == 'n' ||
-		ch == 'N' || ch == 'r' || ch == 'R') return ch;
 	}
 }

@@ -25,8 +25,10 @@
 #define maxoemail		10			// Max number of own email addresses to store
 #define maxemail		100			// Longest email address
 #define maxpath			200			// Longest file path
+#define maxopts			20			// Maximal number of selection options
 #define maxatts			10			// We don't want to list more than 10 people
 #define shdays			3			// # of days when showing agenda
+#define mbch			256			// Size of micro buffer
 #define sbch			1024		// Size of small file buffer
 #define bbch			4096		// Size of big file buffer
 #define klen			20			// Max size of variable grep key
@@ -43,6 +45,8 @@
 // Global variables
 extern char khal[];
 extern char khalconf[];
+extern char pager[maxpath];
+extern char tmpdir[maxpath];
 
 extern int ccal;
 extern char cal[maxcal][maxcalname];
@@ -74,23 +78,24 @@ extern char tzout[klen];
 extern bool intz;
 extern int toff;
 
+extern int debug;
+
 // Forward declarations
-char getch();
 int termcol();
 int termrow();
 
 int printAll();
 int printcal();
 int readconfig();
-int readKhalConfig();
+int readkhalconfig();
 int readmuttconfig();
-char *readconfobj(int cklen, char *token);
 
 void parseBuf(char *bbuf);
 
-char getInput();
-char getCalInput();
-char getemailinput();
+int cpr(char *buf);
+
+char getin();
+char getcalin();
 
 int toffset();
 int isdls();

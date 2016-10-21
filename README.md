@@ -30,23 +30,21 @@ If you would like to use khaler with mutt, add the following lines to your .mail
 
 ## TODO
 * Create die function?
+* Sanitize readconfig input
 * Support for recurring events
 * Email client send string with variables
 	- and set a mutt default
 * Attendee listing RSVP delegation
 * Include participation roles (req, opt, non)
-* Organizer in attendee array?
-* Implement popen for reading khal agenda
-	- Read calendar colors from khal config?
+* Read calendar colors from khal config and apply to agenda?
 * Time zone corrections
 	- Day, month, year wrap
 	- Month length, leap years etc
 	- There should be a library for this
 * Print functions to new .c?
 * Reduce number of global variables
+* Limit header lines on terminal size
 * Merge consdate and conedate
-* Merge read(X)conf files
-* Merge get(X)input functions
 * Reorganize project dir
 * Separate parsing and print functions
 * Finding events in raw text (pipe from mutt)?
@@ -54,10 +52,14 @@ If you would like to use khaler with mutt, add the following lines to your .mail
 	- Or enable getopt()
 * RSVP via mutt pipe (the actual work)
 	- create temp file with randstr
+		- function for setting tmpdir
 	- change PARTSTAT
+	- debug mode enabling raw edit
+		- setting editor in cfg
 	- determine minimal data needed
 	- pipe to determined send string
-* Limit description length on term size?
+* Limit description length on term size
+* Limit # of attendees listed dep on term size
 
 ## Disclaimer
 Quick and dirty. About half done and full of bugs. Have fun!

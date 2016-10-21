@@ -153,7 +153,7 @@ char *randstr(const int len) {
 
 	srand((unsigned) time(&t));
 
-	for(int a = 0; a < len; a++) rstr[a] = charset[(rand() % strlen(charset))]; 
+	for(int a = 0; a < len; a++) rstr[a] = charset[(rand() % strlen(charset))];
 	rstr[len] = '\0';
 
 	return rstr;
