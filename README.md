@@ -44,7 +44,7 @@ If you would like to use khaler with mutt, add the following lines to your .mail
 * Reduce number of global variables
 * Fix highlighting bug when inviting yourself
 * Limit header lines on terminal size
-* cpr as variable arg function?
+* Listing of only email address if attendee name is unknown
 * Merge consdate and conedate
 * Reorganize project dir
 * Separate parsing and print functions
