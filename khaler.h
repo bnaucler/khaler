@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
 #include <string.h>
@@ -29,28 +30,31 @@
 #define maxatts			10			// We don't want to list more than 10 people
 #define shdays			3			// # of days when showing agenda
 #define mbch			256			// Size of micro buffer
-#define sbch			1024		// Size of small file buffer
-#define bbch			4096		// Size of big file buffer
+#define sbch			1024		// Size of small buffer
+#define bbch			4096		// Size of big buffer
+#define tbch			8192		// Size of terminal buffer
 #define klen			20			// Max size of variable grep key
 
 #define cfilename		".khaler"
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
-#define RED				"\x1B[2m\033[31m"
-#define GREEN			"\x1B[2m\033[32m"
-#define YELLOW			"\x1B[2m\033[33m"
+#define RED				"\x1B[1m\033[31m"
+#define GREEN			"\x1B[1m\033[32m"
+#define YELLOW			"\x1B[1m\033[33m"
 #define RESET			"\033[0m"
 
 // Global variables
 extern char khal[];
 extern char khalconf[];
 extern char pager[maxpath];
+extern char editor[maxpath];
 extern char tmpdir[maxpath];
 
 extern int ccal;
 extern char cal[maxcal][maxcalname];
 
+extern char tbuf[tbch];
 extern char evname[maxname];
 extern char location[maxname];
 extern char orgname[maxname];
@@ -77,6 +81,7 @@ extern char tzin[klen];
 extern char tzout[klen];
 extern bool intz;
 extern int toff;
+extern int respemail;
 
 extern int debug;
 
@@ -84,15 +89,21 @@ extern int debug;
 int termcol();
 int termrow();
 
-int printAll();
-int printcal();
+int printall();
+void printcal();
+
 int readconfig();
 int readkhalconfig();
 int readmuttconfig();
 
 void parseBuf(char *bbuf);
 
-int cpr(char *buf);
+void cpr(char *buf);
+int bpr(int bufsize, const char *format, ...);
+int setrespemail();
+int writefile(char *fname, char *text);
+char *getl(char *ret, size_t len);
+int dupecheck();
 
 char getin();
 char getcalin();

@@ -35,15 +35,13 @@ void settoff(char *token) {
 void setname(char *token) {
 
 	token = strstr(token, ":");
-	token++;
-	strcpy(evname, token);
+	strcpy(evname, ++token);
 }
 
 void setloc(char *token) {
 
 	token = strstr(token, ":");
-	token++;
-	if(token) strcpy(location, token);
+	if(token) strcpy(location, ++token);
 }
 
 void setorg(char *token, char *bbuf2) {
@@ -97,9 +95,8 @@ void setatt(char *token, char *bbuf2) {
 void setdescr(char *token) {
 
 	token = strstr(token, ":");
-	token++;
-	if(strcasecmp(token, "REMINDER") != 0) {
-		strcpy(descr, repstr(token, "\\n", "\n"));
+	if(strcasecmp(token, ":REMINDER") != 0) {
+		strcpy(descr, repstr(++token, "\\n", "\n"));
 		strcpy(descr, remchar(descr, '\\'));
 		strcpy(descr, breakline(descr, termcol()));
 		strcpy(descr, remtrail(descr));
@@ -109,9 +106,8 @@ void setdescr(char *token) {
 void setstart(char *token) {
 
 	token = strstr(token, ":");
-	token++;
 	if(token) {
-		consdate(strtok(token, "T"));
+		consdate(strtok(++token, "T"));
 		stime = contime(strtok(NULL,delim));
 	}
 }
@@ -119,16 +115,15 @@ void setstart(char *token) {
 void setend(char *token) {
 
 	token = strstr(token, ":");
-	token++;
 	if(token) {
-		conedate(strtok(token, "T"));
+		conedate(strtok(++token, "T"));
 		etime = contime(strtok(NULL,delim));
 	}
 }
 
 void parseBuf(char *bbuf) {
 
-	char *token = calloc(bbch + 1, sizeof(char));
+	char *token = calloc(bbch, sizeof(char));
 
 	if(strcasestr(bbuf, tzin)) intz = 1;
 	if(strcasestr(bbuf, tzout)) intz = 0;
@@ -139,7 +134,7 @@ void parseBuf(char *bbuf) {
 	if((token = strcasestr(bbuf, zonekey)) && intz) settoff(token);
 
 	if(inev) {
-		char *bbuf2 = calloc(bbch + 1, sizeof(char));
+		char *bbuf2 = calloc(bbch, sizeof(char));
 		strcpy(bbuf2, bbuf);
 
 		if((token = strcasestr(bbuf, namekey))) setname(token);

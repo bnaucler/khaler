@@ -22,10 +22,12 @@
 // mutt config
 #define omkey			"set from"
 
-char *readconfobj(int cklen, char *token) {
+char *readconfobj(char *token, char *key) {
 
-	while(isspace(token[cklen]) || token[cklen] == '=') cklen++;
-	token += cklen;
+	int gklen = strlen(key);
+
+	while(isspace(token[gklen]) || token[gklen] == '=') gklen++;
+	token += gklen;
 	token = strtok(token, "\n");
 	token = remchar(token, '\"');
 
@@ -50,35 +52,24 @@ int readconfig() {
 			if(buf[0] == comstr) continue;
 
 			if((token = strstr(buf, cmailkey))) {
-				int cklen = strlen(cmailkey);
-				strcpy(ownemail[curoemail], readconfobj(cklen, token));
+				strcpy(ownemail[curoemail], readconfobj(token, cmailkey));
 				curoemail++;
 			}
 
-			if((token = strstr(buf, ckpathkey))) {
-				int cklen = strlen(ckpathkey);
-				strcpy(khal, readconfobj(cklen, token));
-			}
+			if((token = strstr(buf, ckpathkey)))
+				strcpy(khal, readconfobj(token, ckpathkey));
 
-			if((token = strstr(buf, pagerkey))) {
-				int cklen = strlen(pagerkey);
-				strcpy(pager, readconfobj(cklen, token));
-			}
+			if((token = strstr(buf, pagerkey)))
+				strcpy(pager, readconfobj(token, pagerkey));
 
-			if((token = strstr(buf, tmpdirkey))) {
-				int cklen = strlen(tmpdirkey);
-				strcpy(tmpdir, readconfobj(cklen, token));
-			}
+			if((token = strstr(buf, tmpdirkey)))
+				strcpy(tmpdir, readconfobj(token, tmpdirkey));
 
-			if((token = strstr(buf, debugkey))) {
-				int cklen = strlen(debugkey);
-				debug =  atoi(readconfobj(cklen, token));
-			}
+			if((token = strstr(buf, debugkey)))
+				debug =  atoi(readconfobj(token, debugkey));
 
-			if((token = strstr(buf, ckcpathkey))) {
-				int cklen = strlen(ckcpathkey);
-				strcpy(khalconf, readconfobj(cklen, token));
-			}
+			if((token = strstr(buf, ckcpathkey)))
+				strcpy(khalconf, readconfobj(token, ckcpathkey));
 		}
 	}
 
@@ -129,8 +120,7 @@ int readkhalconfig() {
 
 			// Find default and format
 			if((token = strstr(buf, defkey))) {
-				int cklen = strlen(defkey);
-				strcpy(token, readconfobj(cklen, token));
+				strcpy(token, readconfobj(token, defkey));
 				for(int b = 0; b < maxcal; b++) {
 					if(strcmp(token, cal[b]) == 0) { ccal = b; }
 				}
@@ -140,9 +130,11 @@ int readkhalconfig() {
 		if(strlen(cal[0]) == 0) {
 			printf("No calendars found in khal configuration file.\n");
 			free(token);
+			fclose(file);
 			return 1;
 		} else {
 			free(token);
+			fclose(file);
 			return 0;
 		}
 	}
@@ -164,14 +156,15 @@ int readmuttconfig() {
 		while(fgets(buf, sbch, file)){
 
 			if((token = strstr(buf, omkey))) {
-				int cklen = strlen(omkey);
-				strcpy(ownemail[0], readconfobj(cklen, token));
+				strcpy(ownemail[0], readconfobj(token, omkey));
 				curoemail++;
+				fclose(file);
 				return 0;
 			}
 		}
 	}
 
+	fclose(file);
 	free(token);
 	return 1;
 }

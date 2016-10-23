@@ -36,14 +36,15 @@ If you would like to use khaler with mutt, add the following lines to your .mail
 	- and set a mutt default
 * Attendee listing RSVP delegation
 * Include participation roles (req, opt, non)
-* Read calendar colors from khal config and apply to agenda?
 * Time zone corrections
 	- Day, month, year wrap
 	- Month length, leap years etc
 	- There should be a library for this
 * Print functions to new .c?
 * Reduce number of global variables
+* Fix highlighting bug when inviting yourself
 * Limit header lines on terminal size
+* cpr as variable arg function?
 * Merge consdate and conedate
 * Reorganize project dir
 * Separate parsing and print functions
@@ -52,10 +53,9 @@ If you would like to use khaler with mutt, add the following lines to your .mail
 	- Or enable getopt()
 * RSVP via mutt pipe (the actual work)
 	- create temp file with randstr
-		- function for setting tmpdir
+		- function for setting tmpdir (env TMP, TEMPDIR, TMPDIR etc)
 	- change PARTSTAT
 	- debug mode enabling raw edit
-		- setting editor in cfg
 	- determine minimal data needed
 	- pipe to determined send string
 * Limit description length on term size

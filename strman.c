@@ -1,3 +1,9 @@
+/*
+
+	strman.c - string operations for khaler
+
+ */
+
 #include "khaler.h"
 
 #include <stdio.h>
@@ -124,7 +130,6 @@ char *breakline(char *ostr, int blen) {
 		b++;
 	}
 
-	// nstr[(len+1)] = '\0';
 	return nstr;
 }
 
