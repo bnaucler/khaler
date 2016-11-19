@@ -6,21 +6,6 @@
 
 #include "khaler.h"
 
-#define emailkey		"mailto"
-#define namekey			"SUMMARY"
-#define lockey			"LOCATION"
-#define attkey			"ATTENDEE"
-#define orgkey			"ORGANIZER"
-#define startkey		"DTSTART"
-#define endkey			"DTEND"
-#define zonekey			"TZOFFSETTO"
-#define descrkey		"DESCRIPTION"
-#define rsvpkey			"PARTSTAT"
-#define evin			"BEGIN:VEVENT"
-#define evout			"END:VEVENT"
-
-#define delim			":;=\r\n"
-
 char tzin[klen];
 char tzout[klen];
 bool intz = 0;
@@ -50,13 +35,13 @@ void setorg(char *token, char *bbuf2) {
 		token = strstr(token, "CN=");
 		token = strtok(token, delim);
 		if(token) {
-			numatts++;
 			strcpy(orgname, strtok(NULL, delim));
 			strcpy(orgname, remchar(orgname, '\"'));
 		}
 		token = strcasestr(bbuf2, emailkey);
 		token = strtok(token, delim);
 		if(token) strcpy(orgemail, strtok(NULL, delim));
+		if(strlen(orgname) > 0 || strlen(orgemail) > 0) numatts++;
 	}
 }
 

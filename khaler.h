@@ -1,6 +1,6 @@
 /*
 
-	khaler - v0.2
+	khaler - v0.3
 	a parser for .ics files and adding to khal
 
 	See README.md for more information.
@@ -18,8 +18,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <termios.h>
+/* #include <unistd.h> */
 #include <time.h>
 
+#define icsmaxlen		75			// According to RFC
+#define rflen			10			// File name length of response file
 #define maxcal			10			// Anyone with more than ten calendars is crazy
 #define maxcalname		20			// Max characters in calendar name
 #define maxname			100			// Longest name of person or event
@@ -35,7 +38,28 @@
 #define tbch			8192		// Size of terminal buffer
 #define klen			20			// Max size of variable grep key
 
+#define emailkey		"mailto"
+#define namekey			"SUMMARY"
+#define lockey			"LOCATION"
+#define attkey			"ATTENDEE"
+#define orgkey			"ORGANIZER"
+#define startkey		"DTSTART"
+#define endkey			"DTEND"
+#define zonekey			"TZOFFSETTO"
+#define descrkey		"DESCRIPTION"
+#define rsvpkey			"PARTSTAT"
+#define evin			"BEGIN:VEVENT"
+#define evout			"END:VEVENT"
+
+#define statusn			"NEEDS-ACTION"
+#define statusa			"ACCEPTED"
+#define statusd			"DECLINED"
+#define statust			"TENTATIVE"
+
 #define cfilename		".khaler"
+#define deftmpdir		"/tmp"
+
+#define delim			":;=\r\n"	// General set of delimiters
 
 // Text color definitions
 #define WHT				"\033[1m\033[37m"
@@ -50,6 +74,7 @@ extern char khalconf[];
 extern char pager[maxpath];
 extern char editor[maxpath];
 extern char tmpdir[maxpath];
+extern char sendstr[sbch];
 
 extern int ccal;
 extern char cal[maxcal][maxcalname];
@@ -104,6 +129,7 @@ int setrespemail();
 int writefile(char *fname, char *text);
 char *getl(char *ret, size_t len);
 int dupecheck();
+char *gettmpfname(char *ret, int randlen, int maxlen);
 
 char getin();
 char getcalin();
@@ -122,5 +148,6 @@ char *repchar(char input[], char rch, char nch);
 char *repstr(char input[], char ostr[], char nstr[]);
 char *breakline(char *ostr, int blen);
 char *remtrail(char *buf);
+char *randstr(const int len);
 
 #endif

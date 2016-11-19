@@ -82,3 +82,31 @@ int dupecheck() {
 
 	return count;
 }
+
+// Returns a temporary filename with full path
+char *gettmpfname(char *ret, int randlen, int maxlen) {
+
+	int count = 0;
+	char vars[4][15];
+	int maxvars = sizeof(vars) / sizeof(vars[0]);
+
+	strcpy(vars[0], "TMP");
+	strcpy(vars[1], "TEMP");
+	strcpy(vars[2], "TMPDIR");
+	strcpy(vars[3], "TEMPDIR");
+
+	do {
+		if(getenv(vars[count]) != NULL) {
+			snprintf(ret, maxlen, "%s", getenv(vars[count]));
+			break;
+		}
+	} while(count++ < maxvars);
+
+	if(strlen(ret) == 0) snprintf(ret, sizeof(deftmpdir), "%s", deftmpdir);
+	if(ret[strlen(ret) - 1] != '/') ret[strlen(ret)] = '/';
+
+	strcat(ret, randstr(randlen));
+	strcat(ret, ".ics");
+
+	return ret;
+}

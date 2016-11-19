@@ -43,11 +43,14 @@ int curoemail = 0;
 int respemail = 0;
 int toff = 0;
 
+typedef enum {ACCEPTED, DECLINED, TENTATIVE} rsvp;
+
 char khalconf[maxpath];
 char khal[maxpath] = "khal";
 char pager[maxpath] = "less";
 char editor[maxpath] = "vi";
 char tmpdir[maxpath] = "/tmp";
+char sendstr[sbch] = "/usr/local/bin/mutt -s RSVP $recepient -a $file";
 
 char icsfile[maxpath];
 
@@ -82,19 +85,130 @@ int mansetemail() {
 	}
 }
 
-int processInput() {
+char *mkrsvpstr(char *input, int status) {
+
+	if(status == ACCEPTED) strcpy(input, repstr(input, statusn, statusa));
+	if(status == DECLINED) strcpy(input, repstr(input, statusn, statusd));
+	if(status == TENTATIVE) strcpy(input, repstr(input, statusn, statust));
+
+	return input;
+}
+
+char *mksendstr(char *ret, char *fname) {
+
+	strcpy(ret, sendstr);
+	strcpy(ret, repstr(ret, "$recipient", orgemail));
+	strcpy(ret, repstr(ret, "$file", fname));
+
+	return ret;
+}
+
+int mkrsvp(int status) {
+
+	char *dfname = calloc(maxpath, sizeof(char));
+	char sbuf[sbch];
+	char *sbuf2 = calloc(sbch, sizeof(char));
+	char *fstr = calloc(maxpath, sizeof(char));
+
+	int olen = 0, oolen = 0, remz = 0;
+
+	strcpy(dfname, gettmpfname(sbuf2, rflen, maxpath));
+
+	FILE* sfile = fopen(icsfile, "r");
+	FILE* dfile = fopen(dfname, "a");
+
+	if(sfile == NULL || dfile == NULL) return 1;
+	else {
+		while(fgets(sbuf, sbch, sfile)){
+
+			if(strcasestr(sbuf, "METHOD:REQUEST")) strcpy(sbuf, "METHOD:REPLY\n");
+			else if(strcasestr(sbuf, "BEGIN:VTIMEZONE")) remz = 1;
+			else if(strcasestr(sbuf, "END:VTIMEZONE")) {
+				remz = 0;
+				continue;
+			}
+
+			if (!remz) {
+				if (!isspace(sbuf[0]) && olen) {
+
+					if(strcasestr(sbuf2, ownemail[respemail])) {
+						strcpy(sbuf2, remchar(sbuf2, '\n'));
+						strcpy(fstr, mkrsvpstr(sbuf2, status));
+						if(strlen(fstr) > (icsmaxlen + 1)) {
+							memmove(fstr + (oolen + 2), fstr + oolen, strlen(fstr) - oolen);
+							fstr[oolen] = '\n';
+							fstr[oolen+1] = ' ';
+						}
+						strcat(fstr, "\n");
+						fprintf(dfile, "%s", fstr);
+					} else {
+						// if(strlen(sbuf2) > (icsmaxlen + 1)) {
+						// 	memmove(sbuf2 + (olen + 1), sbuf2 + olen, strlen(sbuf2) - olen);
+						// 	sbuf2[olen] = ' ';
+						// }
+						// fprintf(dfile, "%s", sbuf2);
+					}
+					strcpy(sbuf2, sbuf);
+					oolen = olen;
+					olen = 0;
+				}
+
+				if(strcasestr(sbuf, attkey)) {
+					strcpy(sbuf2, sbuf);
+					olen = strlen(sbuf);
+					if(!oolen) oolen = olen;
+				} else if(isspace(sbuf[0]) && olen) {
+					memmove(sbuf, sbuf+1, strlen(sbuf));
+					strcat(sbuf2, sbuf);
+				}
+
+				if (!olen) fprintf(dfile, "%s", sbuf);
+			}
+		}
+	}
+
+	fclose(dfile);
+	free(dfname);
+	mksendstr(sbuf2, dfname);
+	if(debug) {
+		printf("DEBUG temp file: %s\n", dfname);
+		printf("DEBUG sendstr: %s\n", sbuf2);
+		printf("DEBUG own email: %s\n", ownemail[respemail]);
+		printf("DEBUG # atts: %d\n", numatts);
+	}
+	// system(sbuf2);
+	free(fstr);
+	free(sbuf2);
+	// remove(dfname); // include error handling
+	// sleep(500);
+	return 0;
+}
+
+int procinput() {
 
 	char cstr[maxpath];
-	char opts[maxopts] = "aisq";
+	char opts[maxopts] = "adtisq";
 
 	if(strlen(ownemail[0]) == 0) strcat(opts, "e");
-	if(debug) strcat(opts, "r");
+	if(debug) strcat(opts, "v");
 
 	char sel = getin(opts);
 
 	for(;;) {
 
 		if(sel == 'a') {
+			mkrsvp(ACCEPTED);
+			sprintf(cstr, "%s import -a %s --batch %s",
+				khal, cal[ccal], icsfile);
+			system(cstr);
+			return 0;
+
+		} else if(sel == 'd') {
+			mkrsvp(DECLINED);
+			return 0;
+
+		} else if(sel == 't') {
+			mkrsvp(TENTATIVE);
 			sprintf(cstr, "%s import -a %s --batch %s",
 				khal, cal[ccal], icsfile);
 			system(cstr);
@@ -110,7 +224,7 @@ int processInput() {
 			mansetemail();
 			return printall();
 
-		} else if(sel == 'r') {
+		} else if(sel == 'v') {
 			sprintf(cstr, "%s %s", pager, icsfile);
 			system(cstr);
 			return printall();
@@ -127,7 +241,6 @@ int processInput() {
 
 void printatts(int respset) {
 
-
 	if(numatts > 1) {
 		bpr(mbch, WHT "Attendees:" RESET " (%d incl. organizer)\n", numatts);
 
@@ -136,7 +249,11 @@ void printatts(int respset) {
 			char rsvpstr[40];
 
 			if(strlen(attname[a]) == 0 && strlen(attemail[a]) == 0) continue;
-			else if(strlen(attname[a]) == 0) strcpy(attname[a], "Unknown name");
+			else if(strlen(attname[a]) == 0) {
+				if(strcmp(attemail[a], ownemail[respemail]) == 0)
+					strcpy(attname[a], "You");
+				else strcpy(attname[a], "Unknown name");
+			}
 			else if(strlen(attemail[a]) == 0) strcpy(attemail[a], "Unknown email");
 
 			if(attrsvp[a] == 1) sprintf(rsvpstr, YELLOW "No response" RESET);
@@ -145,7 +262,7 @@ void printatts(int respset) {
 			else if(attrsvp[a] == 4) sprintf(rsvpstr, RED "Declined" RESET);
 			else strcpy(rsvpstr, "Unknown");
 
-			if (respset == 0 && a == respemail)
+			if (respset == 0 && strcmp(attemail[a], ownemail[respemail]) == 0)
 				bpr(mbch, WHT "%s (%s)" RESET " - %s\n", attname[a], attemail[a], rsvpstr);
 			else bpr(mbch, "%s (%s) - %s\n", attname[a], attemail[a], rsvpstr);
 		}
@@ -169,8 +286,8 @@ void printhdr() {
 
 	if(strlen(location) > 0) bpr(mbch, WHT "Location: " RESET "\t%s\n", location);
 
-	if(strlen(orgname) > 0) 
-		bpr(mbch, WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail); 
+	if(strlen(orgname) > 0)
+		bpr(mbch, WHT "Organizer:" RESET "\t%s (%s)\n", orgname, orgemail);
 	else bpr(mbch, WHT "Organizer:" RESET "\t%s\n", orgemail);
 
 	if(eyear == syear && emonth == smonth && eday == sday)
@@ -188,10 +305,13 @@ void printhdr() {
 void printMenu() {
 
 	cpr("\n--\n\n");
-	cpr(WHT "a:" RESET " Add to khal\n");
+	cpr(WHT "a:" RESET " Accept\n");
+	cpr(WHT "d:" RESET " Decline\n");
+	cpr(WHT "t:" RESET " Tentative\n");
 	if(strlen(ownemail[0]) == 0) cpr(WHT "e:" RESET " Set email address\n");
 	bpr(mbch, WHT "s:" RESET " Select calendar (%s)\n", cal[ccal]);
-	if(debug) cpr(WHT "r:" RESET " View raw in pager\n");
+	if(debug) cpr(WHT "v:" RESET " View raw in pager\n");
+
 	cpr(WHT "i:" RESET " Launch ikhal\n");
 	cpr(WHT "q:" RESET " Quit\n");
 }
@@ -216,10 +336,10 @@ int getagenda() {
 	char sbuf[sbch];
 	char sbuf2[sbch];
 	char erstr[mbch];
-	char *delim = "-";
+	char *ddelim = "-";
 
 	memset(agenda, 0, bbch);
-	
+
 	sprintf(cstr, "%s agenda --days %d %04d-%02d-%02d",
 			khal, shdays, syear, smonth, sday);
 
@@ -231,14 +351,14 @@ int getagenda() {
 		strcpy(agenda, erstr);
 		return 1;
 	}
-	else { 
+	else {
 		while(fgets(sbuf, sbch, rcmd)) {
 			strcpy(sbuf2, sbuf);
-			if(atoi(strtok(sbuf2, delim)) == syear) {
+			if(atoi(strtok(sbuf2, ddelim)) == syear) {
 				sprintf(sbuf2, WHT "%s" RESET, sbuf);
-				strcat(agenda, sbuf2); 
+				strcat(agenda, sbuf2);
 			}
-			else strcat(agenda, sbuf); 
+			else strcat(agenda, sbuf);
 		}
 	}
 
@@ -252,7 +372,7 @@ int printall() {
 
 	memset(tbuf, 0, tbch);
 
-	system(clear);
+	if(!debug) system(clear);
 	printhdr();
 	printatts(setrespemail());
 	printdescr();
@@ -269,7 +389,7 @@ int printall() {
 		printf("Term size: %dx%d. This line: %d\n", termcol(), termrow(), ++lcount);
 	}
 
-	return processInput();
+	return procinput();
 }
 
 int init(int argc, char *execname) {

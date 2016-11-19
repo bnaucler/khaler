@@ -9,11 +9,12 @@
 // khaler config
 #define cmailkey		"email"
 #define pagerkey		"pager"
+#define editorkey		"editor"
 #define debugkey		"debug"
 #define ckpathkey		"kpath"
 #define ckcpathkey		"kconfigpath"
 #define tmpdirkey		"tempdir"
-#define csendstrkey		"sendstring"
+#define sendstrkey		"sendstring"
 
 // khal config
 #define calkey			"calendars"
@@ -62,14 +63,20 @@ int readconfig() {
 			if((token = strstr(buf, pagerkey)))
 				strcpy(pager, readconfobj(token, pagerkey));
 
+			if((token = strstr(buf, editorkey)))
+				strcpy(editor, readconfobj(token, editorkey));
+
 			if((token = strstr(buf, tmpdirkey)))
 				strcpy(tmpdir, readconfobj(token, tmpdirkey));
 
 			if((token = strstr(buf, debugkey)))
-				debug =  atoi(readconfobj(token, debugkey));
+				debug = atoi(readconfobj(token, debugkey));
 
 			if((token = strstr(buf, ckcpathkey)))
 				strcpy(khalconf, readconfobj(token, ckcpathkey));
+
+			if((token = strstr(buf, sendstrkey)))
+				strcpy(sendstr, readconfobj(token, sendstrkey));
 		}
 	}
 
