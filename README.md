@@ -5,7 +5,7 @@ A parser for .ics files which feeds the data into [khal](https://lostpackets.de/
 Björn Westerberg Nauclér 2016  
 mail@bnaucler.se
 
-Compiled and tested on Mac OS Sierra and FreeBSD.
+Compiled and tested on Mac OS Sierra, FreeBSD and Arch Linux.
 
 ## Installation
 `$ sudo make all install`  

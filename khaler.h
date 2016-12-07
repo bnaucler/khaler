@@ -9,6 +9,7 @@
 
 #ifndef KHALER_HEAD
 #define KHALER_HEAD
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <termios.h>
-/* #include <unistd.h> */
 #include <time.h>
 
 #define icsmaxlen		75			// According to RFC
@@ -86,7 +86,7 @@ extern char orgname[maxname];
 extern char orgemail[maxemail];
 extern char ownemail[maxoemail][maxemail];
 extern char descr[bbch];
-extern int stime;
+extern int sttime;
 extern int etime;
 extern int syear;
 extern int smonth;

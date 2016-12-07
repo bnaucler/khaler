@@ -93,7 +93,7 @@ void setstart(char *token) {
 	token = strstr(token, ":");
 	if(token) {
 		consdate(strtok(++token, "T"));
-		stime = contime(strtok(NULL,delim));
+		sttime = contime(strtok(NULL,delim));
 	}
 }
 

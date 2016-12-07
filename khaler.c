@@ -25,7 +25,7 @@ char ownemail[maxoemail][maxemail];
 char descr[bbch];
 char agenda[bbch];
 bool needagenda = 1;
-int stime = 0;
+int sttime = 0;
 int etime = 0;
 int syear = 0;
 int smonth = 0;
@@ -292,11 +292,11 @@ void printhdr() {
 
 	if(eyear == syear && emonth == smonth && eday == sday)
 		bpr(mbch, WHT "Time:" RESET "\t\t%04d-%02d-%02d\t%02d:%02d - %02d:%02d\n\n",
-				syear, smonth, sday, (stime / 60), (stime % 60),
+				syear, smonth, sday, (sttime / 60), (sttime % 60),
 				(etime / 60), (etime % 60));
 	else {
 		bpr(mbch, WHT "Starting at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n",
-				syear, smonth, sday, (stime / 60), (stime % 60));
+				syear, smonth, sday, (sttime / 60), (sttime % 60));
 		bpr(mbch, WHT "Ending at:" RESET "\t%04d-%02d-%02d\t%02d:%02d\n\n",
 				eyear, emonth, eday, (etime / 60), (etime % 60));
 	}
@@ -447,7 +447,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		stime += (toff/60);
+		sttime += (toff/60);
 		etime += (toff/60);
 
 		dupecheck();
